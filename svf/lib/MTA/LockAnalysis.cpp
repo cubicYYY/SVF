@@ -33,10 +33,8 @@
 #include "Util/SVFUtil.h"
 #include "Util/PTAStat.h"
 
-
 using namespace SVF;
 using namespace SVFUtil;
-
 
 void LockAnalysis::analyze()
 {
@@ -62,13 +60,12 @@ void LockAnalysis::analyze()
     DOTIMESTAT(lockTime += (lockEnd - lockStart) / TIMEINTERVAL);
 }
 
-
 /*!
  * Collect lock/unlock sites
  */
 void LockAnalysis::collectLockUnlocksites()
 {
-    ThreadCallGraph* tcg=tct->getThreadCallGraph();
+    ThreadCallGraph* tcg = tct->getThreadCallGraph();
     for (const SVFFunction* F : tct->getSVFModule()->getFunctionSet())
     {
         for (const SVFBasicBlock* bb : F->getBasicBlockList())
@@ -94,14 +91,14 @@ void LockAnalysis::collectLockUnlocksites()
 void LockAnalysis::buildCandidateFuncSetforLock()
 {
 
-    ThreadCallGraph* tcg=tct->getThreadCallGraph();
+    ThreadCallGraph* tcg = tct->getThreadCallGraph();
 
     TCT::PTACGNodeSet visited;
     FIFOWorkList<const PTACallGraphNode*> worklist;
 
     for (InstSet::iterator it = locksites.begin(), eit = locksites.end(); it != eit; ++it)
     {
-        const SVFFunction* fun=(*it)->getParent()->getParent();
+        const SVFFunction* fun = (*it)->getParent()->getParent();
         PTACallGraphNode* cgnode = tcg->getCallGraphNode(fun);
         if (visited.find(cgnode) == visited.end())
         {
@@ -153,14 +150,13 @@ void LockAnalysis::analyzeIntraProcedualLock()
         InstSet backwardInsts;
         InstSet unlockSet;
 
-        bool forward = intraForwardTraverse(lockSite,unlockSet,forwardInsts);
-        bool backward =	intraBackwardTraverse(unlockSet,backwardInsts);
+        bool forward = intraForwardTraverse(lockSite, unlockSet, forwardInsts);
+        bool backward = intraBackwardTraverse(unlockSet, backwardInsts);
 
         /// FIXME:Should we intersect forwardInsts and backwardInsts?
-        if(forward && backward)
-            addIntraLock(lockSite,forwardInsts);
-        else if(forward && !backward)
-            addCondIntraLock(lockSite,forwardInsts);
+        if (forward && backward) addIntraLock(lockSite, forwardInsts);
+        else if (forward && !backward)
+            addCondIntraLock(lockSite, forwardInsts);
     }
 }
 
@@ -176,22 +172,20 @@ bool LockAnalysis::intraForwardTraverse(const SVFInstruction* lockSite, InstSet&
     worklist.push_back(lockSite);
     while (!worklist.empty())
     {
-        const SVFInstruction *I = worklist.back();
+        const SVFInstruction* I = worklist.back();
         worklist.pop_back();
         const SVFInstruction* exitInst = svfFun->getExitBB()->back();
-        if(exitInst == I)
-            return false;
+        if (exitInst == I) return false;
 
         // Skip the visited Instructions.
-        if (forwardInsts.find(I)!=forwardInsts.end())
-            continue;
+        if (forwardInsts.find(I) != forwardInsts.end()) continue;
         forwardInsts.insert(I);
 
         if (isTDRelease(I) && isAliasedLocks(lockSite, I))
         {
             unlockSet.insert(I);
-            DBOUT(DMTA, outs() << "LockAnalysis ci lock   -- " << lockSite->getSourceLoc()<<"\n");
-            DBOUT(DMTA, outs() << "LockAnalysis ci unlock -- " << I->getSourceLoc()<<"\n");
+            DBOUT(DMTA, outs() << "LockAnalysis ci lock   -- " << lockSite->getSourceLoc() << "\n");
+            DBOUT(DMTA, outs() << "LockAnalysis ci unlock -- " << I->getSourceLoc() << "\n");
             continue;
         }
 
@@ -205,7 +199,6 @@ bool LockAnalysis::intraForwardTraverse(const SVFInstruction* lockSite, InstSet&
     return true;
 }
 
-
 /*!
  * Intra-procedural backward traversal
  */
@@ -213,7 +206,7 @@ bool LockAnalysis::intraBackwardTraverse(const InstSet& unlockSet, InstSet& back
 {
 
     InstVec worklist;
-    for(InstSet::const_iterator it = unlockSet.begin(), eit = unlockSet.end(); it!=eit; ++it)
+    for (InstSet::const_iterator it = unlockSet.begin(), eit = unlockSet.end(); it != eit; ++it)
     {
         const SVFInstruction* unlockSite = *it;
         const SVFInstruction* entryInst = unlockSite->getFunction()->getEntryBlock()->back();
@@ -221,21 +214,19 @@ bool LockAnalysis::intraBackwardTraverse(const InstSet& unlockSet, InstSet& back
 
         while (!worklist.empty())
         {
-            const SVFInstruction *I = worklist.back();
+            const SVFInstruction* I = worklist.back();
             worklist.pop_back();
 
-            if(entryInst == I)
-                return false;
+            if (entryInst == I) return false;
 
             // Skip the visited Instructions.
-            if (backwardInsts.find(I)!=backwardInsts.end())
-                continue;
+            if (backwardInsts.find(I) != backwardInsts.end()) continue;
             backwardInsts.insert(I);
 
             if (isTDAcquire(I) && isAliasedLocks(unlockSite, I))
             {
-                DBOUT(DMTA, outs() << "LockAnalysis ci lock   -- " << I->getSourceLoc()<<"\n");
-                DBOUT(DMTA, outs() << "LockAnalysis ci unlock -- " << unlockSite->getSourceLoc()<<"\n");
+                DBOUT(DMTA, outs() << "LockAnalysis ci lock   -- " << I->getSourceLoc() << "\n");
+                DBOUT(DMTA, outs() << "LockAnalysis ci unlock -- " << unlockSite->getSourceLoc() << "\n");
                 continue;
             }
 
@@ -250,14 +241,12 @@ bool LockAnalysis::intraBackwardTraverse(const InstSet& unlockSet, InstSet& back
     return true;
 }
 
-
 void LockAnalysis::collectCxtLock()
 {
     FunSet entryFuncSet = tct->getEntryProcs();
     for (FunSet::const_iterator it = entryFuncSet.begin(), eit = entryFuncSet.end(); it != eit; ++it)
     {
-        if (!isLockCandidateFun(*it))
-            continue;
+        if (!isLockCandidateFun(*it)) continue;
         CallStrCxt cxt;
         CxtLockProc t(cxt, *it);
         pushToCTPWorkList(t);
@@ -268,34 +257,34 @@ void LockAnalysis::collectCxtLock()
         CxtLockProc clp = popFromCTPWorkList();
         PTACallGraphNode* cgNode = getTCG()->getCallGraphNode(clp.getProc());
         // lzh TODO.
-        if (!isLockCandidateFun(cgNode->getFunction()))
-            continue;
+        if (!isLockCandidateFun(cgNode->getFunction())) continue;
 
-        for (PTACallGraphNode::const_iterator nit = cgNode->OutEdgeBegin(), neit = cgNode->OutEdgeEnd(); nit != neit; nit++)
+        for (PTACallGraphNode::const_iterator nit = cgNode->OutEdgeBegin(), neit = cgNode->OutEdgeEnd(); nit != neit;
+             nit++)
         {
             const PTACallGraphEdge* cgEdge = (*nit);
 
-            for (PTACallGraphEdge::CallInstSet::const_iterator cit = cgEdge->directCallsBegin(), ecit = cgEdge->directCallsEnd();
-                    cit != ecit; ++cit)
+            for (PTACallGraphEdge::CallInstSet::const_iterator cit = cgEdge->directCallsBegin(),
+                                                               ecit = cgEdge->directCallsEnd();
+                 cit != ecit; ++cit)
             {
-                DBOUT(DMTA,
-                      outs() << "\nCollecting CxtLocks: handling direct call:" << **cit << "\t" << cgEdge->getSrcNode()->getFunction()->getName()
-                      << "-->" << cgEdge->getDstNode()->getFunction()->getName() << "\n");
+                DBOUT(DMTA, outs() << "\nCollecting CxtLocks: handling direct call:" << **cit << "\t"
+                                   << cgEdge->getSrcNode()->getFunction()->getName() << "-->"
+                                   << cgEdge->getDstNode()->getFunction()->getName() << "\n");
                 handleCallRelation(clp, cgEdge, getSVFCallSite((*cit)->getCallSite()));
             }
-            for (PTACallGraphEdge::CallInstSet::const_iterator ind = cgEdge->indirectCallsBegin(), eind = cgEdge->indirectCallsEnd();
-                    ind != eind; ++ind)
+            for (PTACallGraphEdge::CallInstSet::const_iterator ind = cgEdge->indirectCallsBegin(),
+                                                               eind = cgEdge->indirectCallsEnd();
+                 ind != eind; ++ind)
             {
-                DBOUT(DMTA,
-                      outs() << "\nCollecting CxtLocks: handling indirect call:" << **ind << "\t"
-                      << cgEdge->getSrcNode()->getFunction()->getName() << "-->" << cgEdge->getDstNode()->getFunction()->getName()
-                      << "\n");
+                DBOUT(DMTA, outs() << "\nCollecting CxtLocks: handling indirect call:" << **ind << "\t"
+                                   << cgEdge->getSrcNode()->getFunction()->getName() << "-->"
+                                   << cgEdge->getDstNode()->getFunction()->getName() << "\n");
                 handleCallRelation(clp, cgEdge, getSVFCallSite((*ind)->getCallSite()));
             }
         }
     }
 }
-
 
 /*!
  * Handling call relations when collecting context-sensitive locks
@@ -307,7 +296,7 @@ void LockAnalysis::handleCallRelation(CxtLockProc& clp, const PTACallGraphEdge* 
 
     if (isTDAcquire(cs.getInstruction()))
     {
-        addCxtLock(cxt,cs.getInstruction());
+        addCxtLock(cxt, cs.getInstruction());
         return;
     }
     const SVFFunction* svfcallee = cgEdge->getDstNode()->getFunction();
@@ -319,7 +308,6 @@ void LockAnalysis::handleCallRelation(CxtLockProc& clp, const PTACallGraphEdge* 
         DBOUT(DMTA, outs() << "LockAnalysis Process CallRet old clp --"; clp.dump());
         DBOUT(DMTA, outs() << "LockAnalysis Process CallRet new clp --"; newclp.dump());
     }
-
 }
 
 void LockAnalysis::analyzeLockSpanCxtStmt()
@@ -328,8 +316,7 @@ void LockAnalysis::analyzeLockSpanCxtStmt()
     FunSet entryFuncSet = tct->getEntryProcs();
     for (FunSet::const_iterator it = entryFuncSet.begin(), eit = entryFuncSet.end(); it != eit; ++it)
     {
-        if (!isLockCandidateFun(*it))
-            continue;
+        if (!isLockCandidateFun(*it)) continue;
         CallStrCxt cxt;
         const SVFInstruction* frontInst = (*it)->getEntryBlock()->front();
         CxtStmt cxtstmt(cxt, frontInst);
@@ -357,13 +344,11 @@ void LockAnalysis::analyzeLockSpanCxtStmt()
         else if (isTDAcquire(curInst))
         {
             assert(hasCxtLock(cts) && "context-sensitive lock not found!!");
-            if(addCxtStmtToSpan(cts,cts))
-                handleIntra(cts);
+            if (addCxtStmtToSpan(cts, cts)) handleIntra(cts);
         }
         else if (isTDRelease(curInst))
         {
-            if(removeCxtStmtToSpan(cts,cts))
-                handleIntra(cts);
+            if (removeCxtStmtToSpan(cts, cts)) handleIntra(cts);
         }
         else if (SVFUtil::isCallSite(curInst) && !isExtCall(curInst))
         {
@@ -377,18 +362,15 @@ void LockAnalysis::analyzeLockSpanCxtStmt()
         {
             handleIntra(cts);
         }
-
     }
-
 }
-
 
 /*!
  * Print context-insensitive and context-sensitive locks
  */
 void LockAnalysis::printLocks(const CxtStmt& cts)
 {
-    const CxtLockSet & lockset = getCxtLockfromCxtStmt(cts);
+    const CxtLockSet& lockset = getCxtLockfromCxtStmt(cts);
     outs() << "\nlock sets size = " << lockset.size() << "\n";
     for (CxtLockSet::const_iterator it = lockset.begin(), eit = lockset.end(); it != eit; ++it)
     {
@@ -396,22 +378,21 @@ void LockAnalysis::printLocks(const CxtStmt& cts)
     }
 }
 
-
-
 /// Handle fork
 void LockAnalysis::handleFork(const CxtStmt& cts)
 {
     const SVFInstruction* call = cts.getStmt();
     const CallStrCxt& curCxt = cts.getContext();
     CallICFGNode* cbn = tct->getCallICFGNode(call);
-    if(getTCG()->hasThreadForkEdge(cbn))
+    if (getTCG()->hasThreadForkEdge(cbn))
     {
         for (ThreadCallGraph::ForkEdgeSet::const_iterator cgIt = getTCG()->getForkEdgeBegin(cbn),
-                ecgIt = getTCG()->getForkEdgeEnd(cbn); cgIt != ecgIt; ++cgIt)
+                                                          ecgIt = getTCG()->getForkEdgeEnd(cbn);
+             cgIt != ecgIt; ++cgIt)
         {
             const SVFFunction* svfcallee = (*cgIt)->getDstNode()->getFunction();
             CallStrCxt newCxt = curCxt;
-            pushCxt(newCxt,call,svfcallee);
+            pushCxt(newCxt, call, svfcallee);
             const SVFInstruction* svfInst = svfcallee->getEntryBlock()->front();
             CxtStmt newCts(newCxt, svfInst);
             markCxtStmtFlag(newCts, cts);
@@ -429,12 +410,12 @@ void LockAnalysis::handleCall(const CxtStmt& cts)
     CallICFGNode* cbn = tct->getCallICFGNode(call);
     if (getTCG()->hasCallGraphEdge(cbn))
     {
-        for (PTACallGraph::CallGraphEdgeSet::const_iterator cgIt = getTCG()->getCallEdgeBegin(cbn), ecgIt = getTCG()->getCallEdgeEnd(cbn);
-                cgIt != ecgIt; ++cgIt)
+        for (PTACallGraph::CallGraphEdgeSet::const_iterator cgIt = getTCG()->getCallEdgeBegin(cbn),
+                                                            ecgIt = getTCG()->getCallEdgeEnd(cbn);
+             cgIt != ecgIt; ++cgIt)
         {
             const SVFFunction* svfcallee = (*cgIt)->getDstNode()->getFunction();
-            if (isExtCall(svfcallee))
-                continue;
+            if (isExtCall(svfcallee)) continue;
             CallStrCxt newCxt = curCxt;
             pushCxt(newCxt, call, svfcallee);
             const SVFInstruction* svfInst = svfcallee->getEntryBlock()->front();
@@ -453,13 +434,14 @@ void LockAnalysis::handleRet(const CxtStmt& cts)
     const SVFFunction* svffun = curInst->getFunction();
     PTACallGraphNode* curFunNode = getTCG()->getCallGraphNode(svffun);
 
-    for (PTACallGraphNode::const_iterator it = curFunNode->getInEdges().begin(), eit = curFunNode->getInEdges().end(); it != eit; ++it)
+    for (PTACallGraphNode::const_iterator it = curFunNode->getInEdges().begin(), eit = curFunNode->getInEdges().end();
+         it != eit; ++it)
     {
         PTACallGraphEdge* edge = *it;
-        if (SVFUtil::isa<ThreadForkEdge, ThreadJoinEdge>(edge))
-            continue;
-        for (PTACallGraphEdge::CallInstSet::const_iterator cit = (edge)->directCallsBegin(), ecit = (edge)->directCallsEnd(); cit != ecit;
-                ++cit)
+        if (SVFUtil::isa<ThreadForkEdge, ThreadJoinEdge>(edge)) continue;
+        for (PTACallGraphEdge::CallInstSet::const_iterator cit = (edge)->directCallsBegin(),
+                                                           ecit = (edge)->directCallsEnd();
+             cit != ecit; ++cit)
         {
             CallStrCxt newCxt = curCxt;
             const SVFInstruction* inst = (*cit)->getCallSite();
@@ -473,8 +455,9 @@ void LockAnalysis::handleRet(const CxtStmt& cts)
                 }
             }
         }
-        for (PTACallGraphEdge::CallInstSet::const_iterator cit = (edge)->indirectCallsBegin(), ecit = (edge)->indirectCallsEnd();
-                cit != ecit; ++cit)
+        for (PTACallGraphEdge::CallInstSet::const_iterator cit = (edge)->indirectCallsBegin(),
+                                                           ecit = (edge)->indirectCallsEnd();
+             cit != ecit; ++cit)
         {
             CallStrCxt newCxt = curCxt;
             const SVFInstruction* inst = (*cit)->getCallSite();
@@ -506,20 +489,19 @@ void LockAnalysis::handleIntra(const CxtStmt& cts)
     }
 }
 
-
 void LockAnalysis::pushCxt(CallStrCxt& cxt, const SVFInstruction* call, const SVFFunction* callee)
 {
     const SVFFunction* svfcaller = call->getParent()->getParent();
     CallICFGNode* cbn = tct->getCallICFGNode(call);
     CallSiteID csId = getTCG()->getCallSiteID(cbn, callee);
 
-//    /// handle calling context for candidate functions only
-//    if (isLockCandidateFun(caller) == false)
-//        return;
+    //    /// handle calling context for candidate functions only
+    //    if (isLockCandidateFun(caller) == false)
+    //        return;
 
     if (tct->inSameCallGraphSCC(getTCG()->getCallGraphNode(svfcaller), getTCG()->getCallGraphNode(callee)) == false)
     {
-        tct->pushCxt(cxt,csId);
+        tct->pushCxt(cxt, csId);
         DBOUT(DMTA, tct->dumpCxt(cxt));
     }
 }
@@ -530,18 +512,16 @@ bool LockAnalysis::matchCxt(CallStrCxt& cxt, const SVFInstruction* call, const S
     CallICFGNode* cbn = tct->getCallICFGNode(call);
     CallSiteID csId = getTCG()->getCallSiteID(cbn, callee);
 
-//    /// handle calling context for candidate functions only
-//    if (isLockCandidateFun(caller) == false)
-//        return true;
+    //    /// handle calling context for candidate functions only
+    //    if (isLockCandidateFun(caller) == false)
+    //        return true;
 
     /// partial match
-    if (cxt.empty())
-        return true;
+    if (cxt.empty()) return true;
 
     if (tct->inSameCallGraphSCC(getTCG()->getCallGraphNode(svfcaller), getTCG()->getCallGraphNode(callee)) == false)
     {
-        if (cxt.back() == csId)
-            cxt.pop_back();
+        if (cxt.back() == csId) cxt.pop_back();
         else
             return false;
         DBOUT(DMTA, tct->dumpCxt(cxt));
@@ -549,19 +529,17 @@ bool LockAnalysis::matchCxt(CallStrCxt& cxt, const SVFInstruction* call, const S
     return true;
 }
 
-
 /*!
  * Protected by at least one common lock under every context
  */
-bool LockAnalysis::isProtectedByCommonLock(const SVFInstruction *i1, const SVFInstruction *i2)
+bool LockAnalysis::isProtectedByCommonLock(const SVFInstruction* i1, const SVFInstruction* i2)
 {
     numOfTotalQueries++;
     bool commonlock = false;
     DOTIMESTAT(double queryStart = PTAStat::getClk(true));
-    if (isInsideIntraLock(i1) && isInsideIntraLock(i2))
-        commonlock = isProtectedByCommonCILock(i1,i2) ;
+    if (isInsideIntraLock(i1) && isInsideIntraLock(i2)) commonlock = isProtectedByCommonCILock(i1, i2);
     else
-        commonlock = isProtectedByCommonCxtLock(i1,i2);
+        commonlock = isProtectedByCommonCxtLock(i1, i2);
     DOTIMESTAT(double queryEnd = PTAStat::getClk(true));
     DOTIMESTAT(lockQueriesTime += (queryEnd - queryStart) / TIMEINTERVAL);
     return commonlock;
@@ -570,19 +548,18 @@ bool LockAnalysis::isProtectedByCommonLock(const SVFInstruction *i1, const SVFIn
 /*!
  * Protected by at least one common context-insensitive lock
  */
-bool LockAnalysis::isProtectedByCommonCILock(const SVFInstruction *i1, const SVFInstruction *i2)
+bool LockAnalysis::isProtectedByCommonCILock(const SVFInstruction* i1, const SVFInstruction* i2)
 {
 
-    if(!isInsideCondIntraLock(i1) && !isInsideCondIntraLock(i2))
+    if (!isInsideCondIntraLock(i1) && !isInsideCondIntraLock(i2))
     {
         const InstSet& lockset1 = getIntraLockSet(i1);
         const InstSet& lockset2 = getIntraLockSet(i2);
-        for (InstSet::const_iterator cil1 = lockset1.begin(), ecil1 = lockset1.end(); cil1!=ecil1; ++cil1)
+        for (InstSet::const_iterator cil1 = lockset1.begin(), ecil1 = lockset1.end(); cil1 != ecil1; ++cil1)
         {
-            for (InstSet::const_iterator cil2=lockset2.begin(), ecil2=lockset2.end(); cil2!=ecil2; ++cil2)
+            for (InstSet::const_iterator cil2 = lockset2.begin(), ecil2 = lockset2.end(); cil2 != ecil2; ++cil2)
             {
-                if (isAliasedLocks(*cil1, *cil2))
-                    return true;
+                if (isAliasedLocks(*cil1, *cil2)) return true;
             }
         }
     }
@@ -594,20 +571,18 @@ bool LockAnalysis::isProtectedByCommonCILock(const SVFInstruction *i1, const SVF
  */
 bool LockAnalysis::isProtectedByCommonCxtLock(const CxtStmt& cxtStmt1, const CxtStmt& cxtStmt2)
 {
-    if(!hasCxtLockfromCxtStmt(cxtStmt1) || !hasCxtLockfromCxtStmt(cxtStmt2))
-        return true;
+    if (!hasCxtLockfromCxtStmt(cxtStmt1) || !hasCxtLockfromCxtStmt(cxtStmt2)) return true;
     const CxtLockSet& lockset1 = getCxtLockfromCxtStmt(cxtStmt1);
     const CxtLockSet& lockset2 = getCxtLockfromCxtStmt(cxtStmt2);
-    return alias(lockset1,lockset2);
+    return alias(lockset1, lockset2);
 }
 
 /*!
  * Protected by at least one common context-sensitive lock under each context
  */
-bool LockAnalysis::isProtectedByCommonCxtLock(const SVFInstruction *i1, const SVFInstruction *i2)
+bool LockAnalysis::isProtectedByCommonCxtLock(const SVFInstruction* i1, const SVFInstruction* i2)
 {
-    if(!hasCxtStmtfromInst(i1) || !hasCxtStmtfromInst(i2))
-        return false;
+    if (!hasCxtStmtfromInst(i1) || !hasCxtStmtfromInst(i2)) return false;
     const CxtStmtSet& ctsset1 = getCxtStmtfromInst(i1);
     const CxtStmtSet& ctsset2 = getCxtStmtfromInst(i2);
     for (CxtStmtSet::const_iterator cts1 = ctsset1.begin(), ects1 = ctsset1.end(); cts1 != ects1; cts1++)
@@ -616,25 +591,22 @@ bool LockAnalysis::isProtectedByCommonCxtLock(const SVFInstruction *i1, const SV
         for (CxtStmtSet::const_iterator cts2 = ctsset2.begin(), ects2 = ctsset2.end(); cts2 != ects2; cts2++)
         {
             const CxtStmt& cxtStmt2 = *cts2;
-            if(cxtStmt1==cxtStmt2) continue;
-            if(isProtectedByCommonCxtLock(cxtStmt1,cxtStmt2)==false)
-                return false;
+            if (cxtStmt1 == cxtStmt2) continue;
+            if (isProtectedByCommonCxtLock(cxtStmt1, cxtStmt2) == false) return false;
         }
     }
     return true;
 }
 
-
 /*!
  * Return true if two instructions are inside at least one common lock span
  */
-bool LockAnalysis::isInSameSpan(const SVFInstruction *i1, const SVFInstruction *i2)
+bool LockAnalysis::isInSameSpan(const SVFInstruction* i1, const SVFInstruction* i2)
 {
     DOTIMESTAT(double queryStart = PTAStat::getClk(true));
 
     bool sameSpan = false;
-    if (isInsideIntraLock(i1) && isInsideIntraLock(i2))
-        sameSpan = isInSameCISpan(i1, i2);
+    if (isInsideIntraLock(i1) && isInsideIntraLock(i2)) sameSpan = isInSameCISpan(i1, i2);
     else
         sameSpan = isInSameCSSpan(i1, i2);
 
@@ -646,18 +618,17 @@ bool LockAnalysis::isInSameSpan(const SVFInstruction *i1, const SVFInstruction *
 /*!
  * Return true if two instructions are inside same context-insensitive lock span
  */
-bool LockAnalysis::isInSameCISpan(const SVFInstruction *i1, const SVFInstruction *i2) const
+bool LockAnalysis::isInSameCISpan(const SVFInstruction* i1, const SVFInstruction* i2) const
 {
-    if(!isInsideCondIntraLock(i1) && !isInsideCondIntraLock(i2))
+    if (!isInsideCondIntraLock(i1) && !isInsideCondIntraLock(i2))
     {
         const InstSet& lockset1 = getIntraLockSet(i1);
         const InstSet& lockset2 = getIntraLockSet(i2);
-        for (InstSet::const_iterator cil1 = lockset1.begin(), ecil1 = lockset1.end(); cil1!=ecil1; ++cil1)
+        for (InstSet::const_iterator cil1 = lockset1.begin(), ecil1 = lockset1.end(); cil1 != ecil1; ++cil1)
         {
-            for (InstSet::const_iterator cil2=lockset2.begin(), ecil2=lockset2.end(); cil2!=ecil2; ++cil2)
+            for (InstSet::const_iterator cil2 = lockset2.begin(), ecil2 = lockset2.end(); cil2 != ecil2; ++cil2)
             {
-                if (*cil1==*cil2)
-                    return true;
+                if (*cil1 == *cil2) return true;
             }
         }
     }
@@ -669,19 +640,17 @@ bool LockAnalysis::isInSameCISpan(const SVFInstruction *i1, const SVFInstruction
  */
 bool LockAnalysis::isInSameCSSpan(const CxtStmt& cxtStmt1, const CxtStmt& cxtStmt2) const
 {
-    if(!hasCxtLockfromCxtStmt(cxtStmt1) || !hasCxtLockfromCxtStmt(cxtStmt2))
-        return true;
+    if (!hasCxtLockfromCxtStmt(cxtStmt1) || !hasCxtLockfromCxtStmt(cxtStmt2)) return true;
     const CxtLockSet& lockset1 = getCxtLockfromCxtStmt(cxtStmt1);
     const CxtLockSet& lockset2 = getCxtLockfromCxtStmt(cxtStmt2);
-    return intersects(lockset1,lockset2);
+    return intersects(lockset1, lockset2);
 }
 /*!
  * Return true if two instructions are inside at least one common context-sensitive lock span
  */
-bool LockAnalysis::isInSameCSSpan(const SVFInstruction *I1, const SVFInstruction *I2) const
+bool LockAnalysis::isInSameCSSpan(const SVFInstruction* I1, const SVFInstruction* I2) const
 {
-    if(!hasCxtStmtfromInst(I1) || !hasCxtStmtfromInst(I2))
-        return false;
+    if (!hasCxtStmtfromInst(I1) || !hasCxtStmtfromInst(I2)) return false;
     const CxtStmtSet& ctsset1 = getCxtStmtfromInst(I1);
     const CxtStmtSet& ctsset2 = getCxtStmtfromInst(I2);
 
@@ -691,9 +660,8 @@ bool LockAnalysis::isInSameCSSpan(const SVFInstruction *I1, const SVFInstruction
         for (CxtStmtSet::const_iterator cts2 = ctsset2.begin(), ects2 = ctsset2.end(); cts2 != ects2; cts2++)
         {
             const CxtStmt& cxtStmt2 = *cts2;
-            if(cxtStmt1==cxtStmt2) continue;
-            if(isInSameCSSpan(cxtStmt1,cxtStmt2)==false)
-                return false;
+            if (cxtStmt1 == cxtStmt2) continue;
+            if (isInSameCSSpan(cxtStmt1, cxtStmt2) == false) return false;
         }
     }
     return true;

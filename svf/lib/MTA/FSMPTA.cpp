@@ -54,8 +54,7 @@ void MTASVFGBuilder::buildSVFG()
         DBOUT(DMTA, outs() << SVFUtil::pasMsg("FSMPTA adding edge\n"));
         connectMHPEdges(mssa->getPTA());
     }
-    if (mssa->getPTA()->printStat())
-        svfg->performStat();
+    if (mssa->getPTA()->printStat()) svfg->performStat();
 }
 
 /*!
@@ -122,13 +121,13 @@ void MTASVFGBuilder::performAddingMHPEdges()
     }
 }
 
-SVFGEdge*  MTASVFGBuilder::addTDEdges(NodeID srcId, NodeID dstId, PointsTo& pts)
+SVFGEdge* MTASVFGBuilder::addTDEdges(NodeID srcId, NodeID dstId, PointsTo& pts)
 {
 
     SVFGNode* srcNode = svfg->getSVFGNode(srcId);
     SVFGNode* dstNode = svfg->getSVFGNode(dstId);
 
-    if(SVFGEdge* edge = svfg->hasThreadVFGEdge(srcNode,dstNode,SVFGEdge::TheadMHPIndirectVF))
+    if (SVFGEdge* edge = svfg->hasThreadVFGEdge(srcNode, dstNode, SVFGEdge::TheadMHPIndirectVF))
     {
         assert(SVFUtil::isa<IndirectSVFGEdge>(edge) && "this should be a indirect value flow edge!");
         return (SVFUtil::cast<IndirectSVFGEdge>(edge)->addPointsTo(pts.toNodeBS()) ? edge : nullptr);
@@ -136,7 +135,7 @@ SVFGEdge*  MTASVFGBuilder::addTDEdges(NodeID srcId, NodeID dstId, PointsTo& pts)
     else
     {
         MTASVFGBuilder::numOfNewSVFGEdges++;
-        ThreadMHPIndSVFGEdge* indirectEdge = new ThreadMHPIndSVFGEdge(srcNode,dstNode);
+        ThreadMHPIndSVFGEdge* indirectEdge = new ThreadMHPIndSVFGEdge(srcNode, dstNode);
         indirectEdge->addPointsTo(pts.toNodeBS());
         return (svfg->addSVFGEdge(indirectEdge) ? indirectEdge : nullptr);
     }
@@ -150,18 +149,18 @@ void MTASVFGBuilder::performRemovingMHPEdges()
         recordedges.erase(recordedges.begin());
 
         PointsTo remove_pts = edge2pts[edgepair];
-        const StmtSVFGNode*  n1 = SVFUtil::cast<StmtSVFGNode>(svfg->getSVFGNode(edgepair.first));
-        const StmtSVFGNode*  n2 = SVFUtil::cast<StmtSVFGNode>(svfg->getSVFGNode(edgepair.second));
+        const StmtSVFGNode* n1 = SVFUtil::cast<StmtSVFGNode>(svfg->getSVFGNode(edgepair.first));
+        const StmtSVFGNode* n2 = SVFUtil::cast<StmtSVFGNode>(svfg->getSVFGNode(edgepair.second));
 
-        assert (n1&&n2 && "one node of removed pair is null");
-        assert (n1->hasOutgoingEdge() && "n1 doesn't have out edge");
-        assert (n2->hasIncomingEdge() && "n2 doesn't have in edge");
+        assert(n1 && n2 && "one node of removed pair is null");
+        assert(n1->hasOutgoingEdge() && "n1 doesn't have out edge");
+        assert(n2->hasIncomingEdge() && "n2 doesn't have in edge");
 
         Set<SVFGEdge*> removededges;
         for (SVFGEdge::SVFGEdgeSetTy::iterator iter = n1->OutEdgeBegin(); iter != n1->OutEdgeEnd(); ++iter)
         {
             SVFGEdge* edge = *iter;
-            if (edge->isIndirectVFGEdge() && (edge->getDstNode()==n2))
+            if (edge->isIndirectVFGEdge() && (edge->getDstNode() == n2))
             {
                 IndirectSVFGEdge* e = SVFUtil::cast<IndirectSVFGEdge>(edge);
                 const NodeBS& pts = e->getPointsTo();
@@ -170,7 +169,7 @@ void MTASVFGBuilder::performRemovingMHPEdges()
                     if (const_cast<NodeBS&>(pts).test(*o))
                     {
                         const_cast<NodeBS&>(pts).reset(*o);
-                        MTASVFGBuilder::numOfRemovedPTS ++;
+                        MTASVFGBuilder::numOfRemovedPTS++;
                     }
                 }
 
@@ -181,17 +180,16 @@ void MTASVFGBuilder::performRemovingMHPEdges()
             }
         }
 
-        while(!removededges.empty())
+        while (!removededges.empty())
         {
             SVFGEdge* edge = *removededges.begin();
             removededges.erase(removededges.begin());
             svfg->removeSVFGEdge(edge);
-            DBOUT(DMTA,outs()<<"Read Precision remove: "<<edge->getSrcID()<<" -> "<<edge->getDstID()<<"\n");
+            DBOUT(DMTA, outs() << "Read Precision remove: " << edge->getSrcID() << " -> " << edge->getDstID() << "\n");
             MTASVFGBuilder::numOfRemovedSVFGEdges++;
         }
     }
 }
-
 
 /*!
  *
@@ -200,25 +198,24 @@ void MTASVFGBuilder::performRemovingMHPEdges()
 /// whether is a first write in the lock span.
 bool MTASVFGBuilder::isHeadofSpan(const StmtSVFGNode* n, LockAnalysis::LockSpan lspan)
 {
-    SVFGNodeLockSpan pair(n,lspan);
-    if (pairheadmap.find(pair) != pairheadmap.end())
-        return pairheadmap[pair];
+    SVFGNodeLockSpan pair(n, lspan);
+    if (pairheadmap.find(pair) != pairheadmap.end()) return pairheadmap[pair];
 
     SVFGNodeIDSet prev = getPrevNodes(n);
 
     for (SVFGNodeIDSet::iterator it = prev.begin(), eit = prev.end(); it != eit; ++it)
     {
-        assert (SVFUtil::isa<StoreSVFGNode>(svfg->getSVFGNode(*it)) && "prev is not a store node");
+        assert(SVFUtil::isa<StoreSVFGNode>(svfg->getSVFGNode(*it)) && "prev is not a store node");
         const StmtSVFGNode* prevNode = SVFUtil::dyn_cast<StmtSVFGNode>(svfg->getSVFGNode(*it));
         const SVFInstruction* prevIns = prevNode->getInst();
 
         if (lockana->hasOneCxtInLockSpan(prevIns, lspan))
         {
-            pairheadmap[pair]=false;
+            pairheadmap[pair] = false;
             return false;
         }
     }
-    pairheadmap[pair]=true;
+    pairheadmap[pair] = true;
     return true;
 }
 
@@ -229,11 +226,10 @@ bool MTASVFGBuilder::isHeadofSpan(const StmtSVFGNode* n, InstSet mergespan)
 
     for (SVFGNodeIDSet::iterator it = prev.begin(), eit = prev.end(); it != eit; ++it)
     {
-        assert (SVFUtil::isa<StoreSVFGNode>(svfg->getSVFGNode(*it)) && "prev is not a store node");
+        assert(SVFUtil::isa<StoreSVFGNode>(svfg->getSVFGNode(*it)) && "prev is not a store node");
         const StmtSVFGNode* prevNode = SVFUtil::dyn_cast<StmtSVFGNode>(svfg->getSVFGNode(*it));
         const SVFInstruction* prevIns = prevNode->getInst();
-        if (mergespan.find(prevIns)!=mergespan.end())
-            return false;
+        if (mergespan.find(prevIns) != mergespan.end()) return false;
     }
     return true;
 }
@@ -242,8 +238,7 @@ bool MTASVFGBuilder::isHeadofSpan(const StmtSVFGNode* n, InstSet mergespan)
 /// strong constraints but scalable
 bool MTASVFGBuilder::isHeadofSpan(const StmtSVFGNode* n)
 {
-    if (headmap.find(n) != headmap.end())
-        return headmap[n];
+    if (headmap.find(n) != headmap.end()) return headmap[n];
 
     SVFGNodeIDSet prev = getPrevNodes(n);
 
@@ -255,11 +250,11 @@ bool MTASVFGBuilder::isHeadofSpan(const StmtSVFGNode* n)
 
         if (lockana->isInSameSpan(prevIns, n->getInst()))
         {
-            headmap[n]=false;
+            headmap[n] = false;
             return false;
         }
     }
-    headmap[n]=true;
+    headmap[n] = true;
     return true;
 }
 
@@ -270,13 +265,11 @@ bool MTASVFGBuilder::isTailofSpan(const StmtSVFGNode* n, InstSet mergespan)
 
     for (SVFGNodeIDSet::iterator it = succ.begin(), eit = succ.end(); it != eit; ++it)
     {
-        assert((SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(svfg->getSVFGNode(*it))) &&
-               "succ is not a store/load node");
+        assert((SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(svfg->getSVFGNode(*it))) && "succ is not a store/load node");
         const StmtSVFGNode* succNode = SVFUtil::dyn_cast<StmtSVFGNode>(svfg->getSVFGNode(*it));
         const SVFInstruction* succIns = succNode->getInst();
 
-        if (mergespan.find(succIns)!=mergespan.end())
-            return false;
+        if (mergespan.find(succIns) != mergespan.end()) return false;
     }
     return true;
 }
@@ -286,30 +279,26 @@ bool MTASVFGBuilder::isTailofSpan(const StmtSVFGNode* n, LockAnalysis::LockSpan 
 {
     assert(SVFUtil::isa<StoreSVFGNode>(n) && "Node is not a store node");
 
-    SVFGNodeLockSpan pair(n,lspan);
-    if (pairtailmap.find(pair) != pairtailmap.end())
-        return pairtailmap[pair];
+    SVFGNodeLockSpan pair(n, lspan);
+    if (pairtailmap.find(pair) != pairtailmap.end()) return pairtailmap[pair];
 
     SVFGNodeIDSet succ = getSuccNodes(n);
     for (SVFGNodeIDSet::iterator it = succ.begin(), eit = succ.end(); it != eit; ++it)
     {
-        assert((SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(svfg->getSVFGNode(*it))) &&
-               "succ is not a store/load node");
-        if (SVFUtil::isa<LoadSVFGNode>(svfg->getSVFGNode(*it)))
-            continue;
+        assert((SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(svfg->getSVFGNode(*it))) && "succ is not a store/load node");
+        if (SVFUtil::isa<LoadSVFGNode>(svfg->getSVFGNode(*it))) continue;
         const StmtSVFGNode* succNode = SVFUtil::dyn_cast<StmtSVFGNode>(svfg->getSVFGNode(*it));
         const SVFInstruction* succIns = succNode->getInst();
 
         if (lockana->hasOneCxtInLockSpan(succIns, lspan))
         {
-            pairtailmap[pair]=false;
+            pairtailmap[pair] = false;
             return false;
         }
     }
-    pairtailmap[pair]=true;
+    pairtailmap[pair] = true;
     return true;
 }
-
 
 /// whether for all lockspans that n belongs to, n is the last write.
 /// strong constraints but scalable
@@ -317,16 +306,14 @@ bool MTASVFGBuilder::isTailofSpan(const StmtSVFGNode* n)
 {
     assert(SVFUtil::isa<StoreSVFGNode>(n) && "Node is not a store node");
 
-    if (tailmap.find(n) != tailmap.end())
-        return tailmap[n];
+    if (tailmap.find(n) != tailmap.end()) return tailmap[n];
 
     SVFGNodeIDSet succ = getSuccNodes(n);
 
     for (SVFGNodeIDSet::iterator it = succ.begin(), eit = succ.end(); it != eit; ++it)
     {
         assert((SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(svfg->getSVFGNode(*it))) && "succ is not a store/load node");
-        if (SVFUtil::isa<LoadSVFGNode>(svfg->getSVFGNode(*it)))
-            continue;
+        if (SVFUtil::isa<LoadSVFGNode>(svfg->getSVFGNode(*it))) continue;
 
         const StmtSVFGNode* succNode = SVFUtil::dyn_cast<StmtSVFGNode>(svfg->getSVFGNode(*it));
         const SVFInstruction* succIns = succNode->getInst();
@@ -337,14 +324,13 @@ bool MTASVFGBuilder::isTailofSpan(const StmtSVFGNode* n)
             return false;
         }
     }
-    tailmap[n]=true;
+    tailmap[n] = true;
     return true;
 }
 
 MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getPrevNodes(const StmtSVFGNode* n)
 {
-    if (prevset.find(n)!=prevset.end())
-        return prevset[n];
+    if (prevset.find(n) != prevset.end()) return prevset[n];
 
     SVFGNodeIDSet prev;
     SVFGNodeSet worklist;
@@ -361,28 +347,26 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getPrevNodes(const StmtSVFGNode* n
 
     while (!worklist.empty())
     {
-        const SVFGNode* node =  *worklist.begin();
+        const SVFGNode* node = *worklist.begin();
         worklist.erase(worklist.begin());
         visited.insert(node);
-        if (SVFUtil::isa<StoreSVFGNode>(node))
-            prev.set(node->getId());
+        if (SVFUtil::isa<StoreSVFGNode>(node)) prev.set(node->getId());
         else
         {
             for (SVFGEdge::SVFGEdgeSetTy::iterator iter = node->InEdgeBegin(); iter != node->InEdgeEnd(); ++iter)
             {
                 SVFGEdge* edge = *iter;
-                if (edge->isIndirectVFGEdge() && visited.find(edge->getSrcNode())==visited.end())
+                if (edge->isIndirectVFGEdge() && visited.find(edge->getSrcNode()) == visited.end())
                     worklist.insert(edge->getSrcNode());
             }
         }
     }
-    prevset[n]=prev;
+    prevset[n] = prev;
     return prev;
 }
 MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n)
 {
-    if (succset.find(n)!=succset.end())
-        return succset[n];
+    if (succset.find(n) != succset.end()) return succset[n];
 
     SVFGNodeIDSet succ;
     SVFGNodeSet worklist;
@@ -402,8 +386,7 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n
         const SVFGNode* node = *worklist.begin();
         worklist.erase(worklist.begin());
         visited.insert(node);
-        if (SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(node))
-            succ.set(node->getId());
+        if (SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(node)) succ.set(node->getId());
         else
         {
             for (SVFGEdge::SVFGEdgeSetTy::iterator iter = node->OutEdgeBegin(); iter != node->OutEdgeEnd(); ++iter)
@@ -414,7 +397,7 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n
             }
         }
     }
-    succset[n]=succ;
+    succset[n] = succ;
     return succ;
 }
 MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n, NodeID o)
@@ -431,8 +414,7 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n
         {
             IndirectSVFGEdge* e = SVFUtil::cast<IndirectSVFGEdge>(edge);
             NodeBS pts = e->getPointsTo();
-            if(pts.test(o))
-                worklist.insert(edge->getDstNode());
+            if (pts.test(o)) worklist.insert(edge->getDstNode());
         }
     }
 
@@ -441,8 +423,7 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n
         const SVFGNode* node = *worklist.begin();
         worklist.erase(worklist.begin());
         visited.insert(node);
-        if (SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(node))
-            succ.set(node->getId());
+        if (SVFUtil::isa<StoreSVFGNode, LoadSVFGNode>(node)) succ.set(node->getId());
         else
         {
             for (SVFGEdge::SVFGEdgeSetTy::iterator iter = node->OutEdgeBegin(); iter != node->OutEdgeEnd(); ++iter)
@@ -452,8 +433,7 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n
                 {
                     IndirectSVFGEdge* e = SVFUtil::cast<IndirectSVFGEdge>(edge);
                     NodeBS pts = e->getPointsTo();
-                    if(pts.test(o))
-                        worklist.insert(edge->getDstNode());
+                    if (pts.test(o)) worklist.insert(edge->getDstNode());
                 }
             }
         }
@@ -462,7 +442,7 @@ MTASVFGBuilder::SVFGNodeIDSet MTASVFGBuilder::getSuccNodes(const StmtSVFGNode* n
     return succ;
 }
 
-void MTASVFGBuilder::handleStoreLoadNonSparse(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta)
+void MTASVFGBuilder::handleStoreLoadNonSparse(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta)
 {
     PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
     pts &= pta->getPts(n2->getPAGSrcNodeID());
@@ -470,9 +450,7 @@ void MTASVFGBuilder::handleStoreLoadNonSparse(const StmtSVFGNode* n1,const StmtS
     addTDEdges(n1->getId(), n2->getId(), pts);
 }
 
-
-
-void MTASVFGBuilder::handleStoreStoreNonSparse(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta)
+void MTASVFGBuilder::handleStoreStoreNonSparse(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta)
 {
     PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
     pts &= pta->getPts(n2->getPAGDstNodeID());
@@ -481,17 +459,14 @@ void MTASVFGBuilder::handleStoreStoreNonSparse(const StmtSVFGNode* n1,const Stmt
     addTDEdges(n2->getId(), n1->getId(), pts);
 }
 
-void MTASVFGBuilder::handleStoreLoad(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta)
+void MTASVFGBuilder::handleStoreLoad(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta)
 {
     const SVFInstruction* i1 = n1->getInst();
     const SVFInstruction* i2 = n2->getInst();
     /// MHP
-    if (ADDEDGE_NOMHP!=Options::AddModelFlag() && !mhp->mayHappenInParallel(i1, i2))
-        return;
+    if (ADDEDGE_NOMHP != Options::AddModelFlag() && !mhp->mayHappenInParallel(i1, i2)) return;
     /// Alias
-    if (ADDEDGE_NOALIAS!=Options::AddModelFlag() && !pta->alias(n1->getPAGDstNodeID(), n2->getPAGSrcNodeID()))
-        return;
-
+    if (ADDEDGE_NOALIAS != Options::AddModelFlag() && !pta->alias(n1->getPAGDstNodeID(), n2->getPAGSrcNodeID())) return;
 
     PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
     pts &= pta->getPts(n2->getPAGSrcNodeID());
@@ -501,11 +476,9 @@ void MTASVFGBuilder::handleStoreLoad(const StmtSVFGNode* n1,const StmtSVFGNode* 
     /// otherwise we think this instruction is not locked
     /// This constraint is too strong. All cxt lock under different cxt cannot be identified.
 
-
-    if (ADDEDGE_NOLOCK!=Options::AddModelFlag() && lockana->isProtectedByCommonLock(i1, i2))
+    if (ADDEDGE_NOLOCK != Options::AddModelFlag() && lockana->isProtectedByCommonLock(i1, i2))
     {
-        if (isTailofSpan(n1) && isHeadofSpan(n2))
-            addTDEdges(n1->getId(), n2->getId(), pts);
+        if (isTailofSpan(n1) && isHeadofSpan(n2)) addTDEdges(n1->getId(), n2->getId(), pts);
     }
     else
     {
@@ -513,29 +486,23 @@ void MTASVFGBuilder::handleStoreLoad(const StmtSVFGNode* n1,const StmtSVFGNode* 
     }
 }
 
-
-
-void MTASVFGBuilder::handleStoreStore(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta)
+void MTASVFGBuilder::handleStoreStore(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta)
 {
     const SVFInstruction* i1 = n1->getInst();
     const SVFInstruction* i2 = n2->getInst();
     /// MHP
-    if (ADDEDGE_NOMHP!=Options::AddModelFlag() && !mhp->mayHappenInParallel(i1, i2))
-        return;
+    if (ADDEDGE_NOMHP != Options::AddModelFlag() && !mhp->mayHappenInParallel(i1, i2)) return;
     /// Alias
-    if (ADDEDGE_NOALIAS!=Options::AddModelFlag() && !pta->alias(n1->getPAGDstNodeID(), n2->getPAGDstNodeID()))
-        return;
+    if (ADDEDGE_NOALIAS != Options::AddModelFlag() && !pta->alias(n1->getPAGDstNodeID(), n2->getPAGDstNodeID())) return;
 
     PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
     pts &= pta->getPts(n2->getPAGDstNodeID());
 
     /// Lock
-    if (ADDEDGE_NOLOCK!=Options::AddModelFlag() && lockana->isProtectedByCommonLock(i1, i2))
+    if (ADDEDGE_NOLOCK != Options::AddModelFlag() && lockana->isProtectedByCommonLock(i1, i2))
     {
-        if (isTailofSpan(n1) && isHeadofSpan(n2))
-            addTDEdges(n1->getId(), n2->getId(), pts);
-        if (isTailofSpan(n2) && isHeadofSpan(n1))
-            addTDEdges(n2->getId(), n1->getId(), pts);
+        if (isTailofSpan(n1) && isHeadofSpan(n2)) addTDEdges(n1->getId(), n2->getId(), pts);
+        if (isTailofSpan(n2) && isHeadofSpan(n1)) addTDEdges(n2->getId(), n1->getId(), pts);
     }
     else
     {
@@ -544,114 +511,111 @@ void MTASVFGBuilder::handleStoreStore(const StmtSVFGNode* n1,const StmtSVFGNode*
     }
 }
 
-void MTASVFGBuilder::handleStoreLoadWithLockPrecisely(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta)
+void MTASVFGBuilder::handleStoreLoadWithLockPrecisely(const StmtSVFGNode* n1, const StmtSVFGNode* n2,
+                                                      PointerAnalysis* pta)
 {
-    if (!pta->alias(n1->getPAGDstNodeID(), n2->getPAGSrcNodeID()))
-        return;
+    if (!pta->alias(n1->getPAGDstNodeID(), n2->getPAGSrcNodeID())) return;
 
-//    PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
-//    pts &= pta->getPts(n2->getPAGSrcNodeID());
-//
-//    const SVFInstruction* i1 = n1->getInst();
-//    const SVFInstruction* i2 = n2->getInst();
-//
-//    NodeBS comlocks1;
-//    NodeBS comlocks2;
-//    lockana->getCommonLocks(i1, i2, comlocks1, comlocks2);
-//
-//    outs()<<comlocks1.count() << "  "<< comlocks2.count()<<"\n";
+    //    PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
+    //    pts &= pta->getPts(n2->getPAGSrcNodeID());
+    //
+    //    const SVFInstruction* i1 = n1->getInst();
+    //    const SVFInstruction* i2 = n2->getInst();
+    //
+    //    NodeBS comlocks1;
+    //    NodeBS comlocks2;
+    //    lockana->getCommonLocks(i1, i2, comlocks1, comlocks2);
+    //
+    //    outs()<<comlocks1.count() << "  "<< comlocks2.count()<<"\n";
 
-
-//    if(comlocks1.count() && comlocks2.count()) {
-//        bool n1istail = false;
-//        for (NodeBS::iterator it1 = comlocks1.begin(), ie1 = comlocks1.end(); it1 != ie1; ++it1) {
-//            LockAnalysis::LockSpan lspan1 = lockana->getSpanfromCxtLock(*it1);
-//            /// exist lock span, n1 is tail;
-//            if (isTailofSpan(n1, lspan1))
-//                n1istail = true;
-//        }
-//
-//        bool n2ishead = false;
-//        for (NodeBS::iterator it2 = comlocks2.begin(), ie2 = comlocks2.end(); it2 != ie2; ++it2) {
-//            LockAnalysis::LockSpan lspan2 = lockana->getSpanfromCxtLock(*it2);
-//            /// exist lock span, n2 is head;
-//            if (isHeadofSpan(n2, lspan2))
-//                n2ishead = true;
-//        }
-//
-//        if (n1istail && n2ishead)
-//            addTDEdges(n1->getId(), n2->getId(), pts);
-//    } else {
-//        addTDEdges(n1->getId(), n2->getId(), pts);
-//    }
+    //    if(comlocks1.count() && comlocks2.count()) {
+    //        bool n1istail = false;
+    //        for (NodeBS::iterator it1 = comlocks1.begin(), ie1 = comlocks1.end(); it1 != ie1; ++it1) {
+    //            LockAnalysis::LockSpan lspan1 = lockana->getSpanfromCxtLock(*it1);
+    //            /// exist lock span, n1 is tail;
+    //            if (isTailofSpan(n1, lspan1))
+    //                n1istail = true;
+    //        }
+    //
+    //        bool n2ishead = false;
+    //        for (NodeBS::iterator it2 = comlocks2.begin(), ie2 = comlocks2.end(); it2 != ie2; ++it2) {
+    //            LockAnalysis::LockSpan lspan2 = lockana->getSpanfromCxtLock(*it2);
+    //            /// exist lock span, n2 is head;
+    //            if (isHeadofSpan(n2, lspan2))
+    //                n2ishead = true;
+    //        }
+    //
+    //        if (n1istail && n2ishead)
+    //            addTDEdges(n1->getId(), n2->getId(), pts);
+    //    } else {
+    //        addTDEdges(n1->getId(), n2->getId(), pts);
+    //    }
 }
-void MTASVFGBuilder::handleStoreStoreWithLockPrecisely(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta)
+void MTASVFGBuilder::handleStoreStoreWithLockPrecisely(const StmtSVFGNode* n1, const StmtSVFGNode* n2,
+                                                       PointerAnalysis* pta)
 {
-    if (!pta->alias(n1->getPAGDstNodeID(), n2->getPAGDstNodeID()))
-        return;
+    if (!pta->alias(n1->getPAGDstNodeID(), n2->getPAGDstNodeID())) return;
 
-//    PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
-//    pts &= pta->getPts(n2->getPAGDstNodeID());
-//
-//    const SVFInstruction* i1 = n1->getInst();
-//    const SVFInstruction* i2 = n2->getInst();
+    //    PointsTo pts = pta->getPts(n1->getPAGDstNodeID());
+    //    pts &= pta->getPts(n2->getPAGDstNodeID());
+    //
+    //    const SVFInstruction* i1 = n1->getInst();
+    //    const SVFInstruction* i2 = n2->getInst();
 
-
-//    NodeBS comlocks1;
-//    NodeBS comlocks2;
-//    lockana->getCommonLocks(i1, i2, comlocks1, comlocks2);
-//    if(comlocks1.count() && comlocks2.count()) {
-//        bool n1istail = false;
-//        for (NodeBS::iterator it1 = comlocks1.begin(), ie1 = comlocks1.end(); it1 != ie1; ++it1) {
-//            LockAnalysis::LockSpan lspan1 = lockana->getSpanfromCxtLock(*it1);
-//            /// exist lock span, n1 is tail;
-//            if (isTailofSpan(n1, lspan1))
-//                n1istail = true;
-//        }
-//        bool n2ishead = false;
-//        for (NodeBS::iterator it2 = comlocks2.begin(), ie2 = comlocks2.end(); it2 != ie2; ++it2) {
-//            LockAnalysis::LockSpan lspan2 = lockana->getSpanfromCxtLock(*it2);
-//            /// exist lock span, n2 is head;
-//            if (isHeadofSpan(n2, lspan2))
-//                n2ishead = true;
-//        }
-//        if (n1istail && n2ishead)
-//            addTDEdges(n1->getId(), n2->getId(), pts);
-//
-//
-//
-//        bool n2istail = false;
-//        for (NodeBS::iterator it2 = comlocks2.begin(), ie2 = comlocks2.end(); it2 != ie2; ++it2) {
-//            LockAnalysis::LockSpan lspan2 = lockana->getSpanfromCxtLock(*it2);
-//            /// exist lock span, n2 is tail;
-//            if (isTailofSpan(n2, lspan2))
-//                n2istail = true;
-//        }
-//        bool n1ishead = false;
-//        for (NodeBS::iterator it1 = comlocks1.begin(), ie1 = comlocks1.end(); it1 != ie1; ++it1) {
-//            LockAnalysis::LockSpan lspan1 = lockana->getSpanfromCxtLock(*it1);
-//            /// exist lock span, n1 is head;
-//            if (isHeadofSpan(n1, lspan1))
-//                n1ishead = true;
-//        }
-//        if (n2istail && n1ishead)
-//            addTDEdges(n2->getId(), n1->getId(), pts);
-//
-//    } else {
-//        addTDEdges(n1->getId(), n2->getId(), pts);
-//        addTDEdges(n2->getId(), n1->getId(), pts);
-//    }
+    //    NodeBS comlocks1;
+    //    NodeBS comlocks2;
+    //    lockana->getCommonLocks(i1, i2, comlocks1, comlocks2);
+    //    if(comlocks1.count() && comlocks2.count()) {
+    //        bool n1istail = false;
+    //        for (NodeBS::iterator it1 = comlocks1.begin(), ie1 = comlocks1.end(); it1 != ie1; ++it1) {
+    //            LockAnalysis::LockSpan lspan1 = lockana->getSpanfromCxtLock(*it1);
+    //            /// exist lock span, n1 is tail;
+    //            if (isTailofSpan(n1, lspan1))
+    //                n1istail = true;
+    //        }
+    //        bool n2ishead = false;
+    //        for (NodeBS::iterator it2 = comlocks2.begin(), ie2 = comlocks2.end(); it2 != ie2; ++it2) {
+    //            LockAnalysis::LockSpan lspan2 = lockana->getSpanfromCxtLock(*it2);
+    //            /// exist lock span, n2 is head;
+    //            if (isHeadofSpan(n2, lspan2))
+    //                n2ishead = true;
+    //        }
+    //        if (n1istail && n2ishead)
+    //            addTDEdges(n1->getId(), n2->getId(), pts);
+    //
+    //
+    //
+    //        bool n2istail = false;
+    //        for (NodeBS::iterator it2 = comlocks2.begin(), ie2 = comlocks2.end(); it2 != ie2; ++it2) {
+    //            LockAnalysis::LockSpan lspan2 = lockana->getSpanfromCxtLock(*it2);
+    //            /// exist lock span, n2 is tail;
+    //            if (isTailofSpan(n2, lspan2))
+    //                n2istail = true;
+    //        }
+    //        bool n1ishead = false;
+    //        for (NodeBS::iterator it1 = comlocks1.begin(), ie1 = comlocks1.end(); it1 != ie1; ++it1) {
+    //            LockAnalysis::LockSpan lspan1 = lockana->getSpanfromCxtLock(*it1);
+    //            /// exist lock span, n1 is head;
+    //            if (isHeadofSpan(n1, lspan1))
+    //                n1ishead = true;
+    //        }
+    //        if (n2istail && n1ishead)
+    //            addTDEdges(n2->getId(), n1->getId(), pts);
+    //
+    //    } else {
+    //        addTDEdges(n1->getId(), n2->getId(), pts);
+    //        addTDEdges(n2->getId(), n1->getId(), pts);
+    //    }
 }
-
 
 void MTASVFGBuilder::mergeSpan(NodeBS comlocks, InstSet& res)
 {
-//    for (NodeBS::iterator it = comlocks.begin(), ie = comlocks.end(); it != ie; ++it) {
-//        LockAnalysis::LockSpan lspan = lockana->getSpanfromCxtLock(*it);
-//        for (LockAnalysis::LockSpan::const_iterator cts = lspan.begin(), ects = lspan.end(); cts!=ects; ++cts) {
-//            res.insert((*cts).getStmt());
-//        }
-//    }
+    //    for (NodeBS::iterator it = comlocks.begin(), ie = comlocks.end(); it != ie; ++it) {
+    //        LockAnalysis::LockSpan lspan = lockana->getSpanfromCxtLock(*it);
+    //        for (LockAnalysis::LockSpan::const_iterator cts = lspan.begin(), ects = lspan.end(); cts!=ects; ++cts) {
+    //            res.insert((*cts).getStmt());
+    //        }
+    //    }
 }
 
 /// For o,  n2-o->n1, n1 and n2 are write. Foreach n3:n1->n3, n2->n3; then remove n2->n1.
@@ -690,12 +654,10 @@ void MTASVFGBuilder::readPrecision()
                             break;
                         }
                     }
-                    if (remove)
-                        remove_pts.set(*o);
+                    if (remove) remove_pts.set(*o);
                 }
 
-                if (remove_pts.count())
-                    recordRemovingEdge(n2->getId(), n1->getId(), remove_pts);
+                if (remove_pts.count()) recordRemovingEdge(n2->getId(), n1->getId(), remove_pts);
             }
         }
     }
@@ -706,7 +668,7 @@ void MTASVFGBuilder::readPrecision()
 void MTASVFGBuilder::connectMHPEdges(PointerAnalysis* pta)
 {
     PCG* pcg = new PCG(pta);
-    if ((ADDEDGE_NONSPARSE==Options::AddModelFlag()) && Options::UsePCG())
+    if ((ADDEDGE_NONSPARSE == Options::AddModelFlag()) && Options::UsePCG())
     {
         pcg->analyze();
     }
@@ -716,7 +678,7 @@ void MTASVFGBuilder::connectMHPEdges(PointerAnalysis* pta)
 
     /// todo: we ignore rule 2 and 3. but so far I haven't added intra-thread value flow affected by fork
     /// and inter-thread value flow affected by join
-    for (SVFGNodeSet::const_iterator it1 = stnodeSet.begin(), eit1 =  stnodeSet.end(); it1!=eit1; ++it1)
+    for (SVFGNodeSet::const_iterator it1 = stnodeSet.begin(), eit1 = stnodeSet.end(); it1 != eit1; ++it1)
     {
         const StmtSVFGNode* n1 = SVFUtil::cast<StmtSVFGNode>(*it1);
         const SVFInstruction* i1 = n1->getInst();
@@ -725,7 +687,7 @@ void MTASVFGBuilder::connectMHPEdges(PointerAnalysis* pta)
         {
             const StmtSVFGNode* n2 = SVFUtil::cast<StmtSVFGNode>(*it2);
             const SVFInstruction* i2 = n2->getInst();
-            if (ADDEDGE_NONSPARSE==Options::AddModelFlag())
+            if (ADDEDGE_NONSPARSE == Options::AddModelFlag())
             {
                 if (Options::UsePCG())
                 {
@@ -743,7 +705,7 @@ void MTASVFGBuilder::connectMHPEdges(PointerAnalysis* pta)
             }
         }
 
-        for (SVFGNodeSet::const_iterator it2 = std::next(it1), eit2 =  stnodeSet.end(); it2!=eit2; ++it2)
+        for (SVFGNodeSet::const_iterator it2 = std::next(it1), eit2 = stnodeSet.end(); it2 != eit2; ++it2)
         {
             const StmtSVFGNode* n2 = SVFUtil::cast<StmtSVFGNode>(*it2);
             const SVFInstruction* i2 = n2->getInst();
@@ -751,7 +713,7 @@ void MTASVFGBuilder::connectMHPEdges(PointerAnalysis* pta)
             {
                 if (Options::UsePCG())
                 {
-                    if(pcg->mayHappenInParallel(i1, i2) || mhp->mayHappenInParallel(i1, i2))
+                    if (pcg->mayHappenInParallel(i1, i2) || mhp->mayHappenInParallel(i1, i2))
                         handleStoreStoreNonSparse(n1, n2, pta);
                 }
                 else
@@ -766,10 +728,10 @@ void MTASVFGBuilder::connectMHPEdges(PointerAnalysis* pta)
         }
     }
 
-    if(Options::ReadPrecisionTDEdge() && ADDEDGE_NORP!=Options::AddModelFlag())
+    if (Options::ReadPrecisionTDEdge() && ADDEDGE_NORP != Options::AddModelFlag())
     {
-        DBOUT(DGENERAL,outs()<<"Read precision edge removing \n");
-        DBOUT(DMTA,outs()<<"Read precision edge removing \n");
+        DBOUT(DGENERAL, outs() << "Read precision edge removing \n");
+        DBOUT(DMTA, outs() << "Read precision edge removing \n");
         readPrecision();
     }
 }
@@ -782,11 +744,10 @@ void FSMPTA::initialize(SVFModule* module)
     PointerAnalysis::initialize();
 
     AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(getPAG());
-    MTASVFGBuilder mtaSVFGBuilder(mhp,lockana);
+    MTASVFGBuilder mtaSVFGBuilder(mhp, lockana);
     svfg = mtaSVFGBuilder.buildPTROnlySVFG(ander);
     setGraph(svfg);
-    //AndersenWaveDiff::releaseAndersenWaveDiff();
+    // AndersenWaveDiff::releaseAndersenWaveDiff();
 
     stat = new FlowSensitiveStat(this);
 }
-

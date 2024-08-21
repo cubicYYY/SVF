@@ -14,7 +14,6 @@
 using namespace SVF;
 using namespace SVFUtil;
 
-
 void MTAAnnotator::annotateDRCheck(Instruction* inst)
 {
     std::string str;
@@ -41,8 +40,7 @@ void MTAAnnotator::collectLoadStoreInst(SVFModule* mod)
     {
         for (Module::const_iterator F = M.begin(), E = M.end(); F != E; ++F)
         {
-            if (SVFUtil::isExtCall(LLVMModuleSet::getLLVMModuleSet()->getSVFFunction(&*F)))
-                continue;
+            if (SVFUtil::isExtCall(LLVMModuleSet::getLLVMModuleSet()->getSVFFunction(&*F))) continue;
             for (const_inst_iterator II = inst_begin(*F), E = inst_end(*F); II != E; ++II)
             {
                 const Instruction* inst = &*II;
@@ -108,16 +106,14 @@ void MTAAnnotator::initialize(MHP* m, LockAnalysis* la)
 {
     mhp = m;
     lsa = la;
-    if (!Options::AnnoFlag())
-        return;
+    if (!Options::AnnoFlag()) return;
     collectLoadStoreInst(mhp->getTCT()->getPTA()->getModule());
 }
 
 void MTAAnnotator::pruneThreadLocal(PointerAnalysis* pta)
 {
     bool AnnoLocal = Options::AnnoFlag() & ANNO_LOCAL;
-    if (!AnnoLocal)
-        return;
+    if (!AnnoLocal) return;
 
     DBOUT(DGENERAL, outs() << pasMsg("Run annotator prune thread local pairs\n"));
     SVFIR* pag = pta->getPAG();
@@ -153,14 +149,12 @@ void MTAAnnotator::pruneThreadLocal(PointerAnalysis* pta)
         PointsTo pts = pta->getPts(obj);
         for (PointsTo::iterator pit = pts.begin(), epit = pts.end(); pit != epit; ++pit)
         {
-            if (!nonlocalobjs.test(*pit))
-                worklist.set(*pit);
+            if (!nonlocalobjs.test(*pit)) worklist.set(*pit);
         }
         NodeBS fields = pag->getAllFieldsObjVars(obj);
         for (NodeBS::iterator pit = fields.begin(), epit = fields.end(); pit != epit; ++pit)
         {
-            if (!nonlocalobjs.test(*pit))
-                worklist.set(*pit);
+            if (!nonlocalobjs.test(*pit)) worklist.set(*pit);
         }
     }
 
@@ -169,7 +163,8 @@ void MTAAnnotator::pruneThreadLocal(PointerAnalysis* pta)
     InstSet needannold;
     for (InstSet::iterator it = storeset.begin(), eit = storeset.end(); it != eit; ++it)
     {
-        PointsTo pts = pta->getPts(pag->getValueNode(LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getStoreOperand(*it))));
+        PointsTo pts =
+            pta->getPts(pag->getValueNode(LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getStoreOperand(*it))));
         for (PointsTo::iterator pit = pts.begin(), epit = pts.end(); pit != epit; ++pit)
         {
             if (nonlocalobjs.test(*pit))
@@ -182,7 +177,8 @@ void MTAAnnotator::pruneThreadLocal(PointerAnalysis* pta)
 
     for (InstSet::iterator it = loadset.begin(), eit = loadset.end(); it != eit; ++it)
     {
-        PointsTo pts = pta->getPts(pag->getValueNode(LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getLoadOperand(*it))));
+        PointsTo pts =
+            pta->getPts(pag->getValueNode(LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getLoadOperand(*it))));
         for (PointsTo::iterator pit = pts.begin(), epit = pts.end(); pit != epit; ++pit)
         {
             if (nonlocalobjs.test(*pit))
@@ -205,8 +201,7 @@ void MTAAnnotator::pruneAliasMHP(PointerAnalysis* pta)
     bool AnnoMHP = Options::AnnoFlag() & ANNO_MHP;
     bool AnnoAlias = Options::AnnoFlag() & ANNO_ALIAS;
 
-    if (!AnnoMHP && !AnnoAlias)
-        return;
+    if (!AnnoMHP && !AnnoAlias) return;
 
     DBOUT(DGENERAL, outs() << pasMsg("Run annotator prune Alias or MHP pairs\n"));
     InstSet needannost;
@@ -220,8 +215,7 @@ void MTAAnnotator::pruneAliasMHP(PointerAnalysis* pta)
             const SVFValue* v1 = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getStoreOperand(*it1));
             const SVFValue* v2 = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getStoreOperand(*it2));
 
-            if(!pta->alias(v1, v2))
-                continue;
+            if (!pta->alias(v1, v2)) continue;
 
             if (AnnoMHP)
             {
@@ -246,8 +240,7 @@ void MTAAnnotator::pruneAliasMHP(PointerAnalysis* pta)
             const SVFValue* v1 = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getStoreOperand(*it1));
             const SVFValue* v2 = LLVMModuleSet::getLLVMModuleSet()->getSVFValue(getLoadOperand(*it2));
 
-            if(!pta->alias(v1,v2))
-                continue;
+            if (!pta->alias(v1, v2)) continue;
 
             if (AnnoMHP)
             {
@@ -280,8 +273,7 @@ void MTAAnnotator::pruneAliasMHP(PointerAnalysis* pta)
 }
 void MTAAnnotator::performAnnotate()
 {
-    if (!Options::AnnoFlag())
-        return;
+    if (!Options::AnnoFlag()) return;
     for (InstSet::iterator it = storeset.begin(), eit = storeset.end(); it != eit; ++it)
     {
         annotateDRCheck(const_cast<Instruction*>(*it));

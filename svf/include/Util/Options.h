@@ -175,11 +175,11 @@ public:
     static const Option<bool> PrintValidRes;
 
     static const Option<bool> LockValid;
-    //MTAStat.cpp
+    // MTAStat.cpp
     static const Option<bool> AllPairMHP;
 
     // PCG.cpp
-    //const Option<bool> TDPrint
+    // const Option<bool> TDPrint
 
     // TCT.cpp
     static const Option<bool> TCTDotGraph;
@@ -251,8 +251,8 @@ public:
     static const Option<std::string> CFLGraph;
     static const Option<bool> PrintCFL;
     static const Option<bool> FlexSymMap;
-    static const Option<bool>  PEGTransfer;
-    static const Option<bool>  CFLSVFG;
+    static const Option<bool> PEGTransfer;
+    static const Option<bool> CFLSVFG;
     static const Option<bool> POCRAlias;
     static const Option<bool> POCRHybrid;
     static const Option<bool> Customized;
@@ -286,6 +286,6 @@ public:
     // float precision for symbolic abstraction
     static const Option<u32_t> AEPrecision;
 };
-}  // namespace SVF
+} // namespace SVF
 
-#endif  // ifdef OPTIONS_H_
+#endif // ifdef OPTIONS_H_

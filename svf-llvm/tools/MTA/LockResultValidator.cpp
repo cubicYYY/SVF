@@ -21,17 +21,16 @@ namespace SVF
 class RaceValidator : public RaceResultValidator
 {
 public:
-    RaceValidator(LockAnalysis* lockAnalysis) :lsa(lockAnalysis)
-    {
-    }
+    RaceValidator(LockAnalysis* lockAnalysis) : lsa(lockAnalysis) {}
     bool protectedByCommonLocks(const Instruction* I1, const Instruction* I2)
     {
         const SVFInstruction* inst1 = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I1);
         const SVFInstruction* inst2 = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I2);
         return lsa->isProtectedByCommonLock(inst1, inst2);
     }
+
 private:
-    LockAnalysis *lsa;
+    LockAnalysis* lsa;
 };
 
 } // End namespace SVF
@@ -53,7 +52,7 @@ Set<std::string> LockResultValidator::getStringArg(const Instruction* inst, unsi
     return split(vthdcxtstring, ',');
 }
 
-Set<std::string> &LockResultValidator::split(const std::string &s, char delim, Set<std::string> &elems)
+Set<std::string>& LockResultValidator::split(const std::string& s, char delim, Set<std::string>& elems)
 {
     std::stringstream ss(s);
     std::string item;
@@ -64,14 +63,14 @@ Set<std::string> &LockResultValidator::split(const std::string &s, char delim, S
     return elems;
 }
 
-Set<std::string> LockResultValidator::split(const std::string &s, char delim)
+Set<std::string> LockResultValidator::split(const std::string& s, char delim)
 {
     Set<std::string> elems;
     split(s, delim, elems);
     return elems;
 }
 
-inline std::string LockResultValidator::getOutput(const char *scenario, LOCK_FLAG analysisRes)
+inline std::string LockResultValidator::getOutput(const char* scenario, LOCK_FLAG analysisRes)
 {
     std::string ret(scenario);
     ret += "\t";
@@ -95,23 +94,22 @@ inline std::string LockResultValidator::getOutput(const char *scenario, LOCK_FLA
 bool LockResultValidator::collectLockTargets()
 {
     const Function* F = nullptr;
-    for (Module &M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
+    for (Module& M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
     {
-        for(auto it = M.begin(); it != M.end(); it++)
+        for (auto it = M.begin(); it != M.end(); it++)
         {
             const std::string fName = (*it).getName().str();
-            if(fName.find(LOCK) != std::string::npos)
+            if (fName.find(LOCK) != std::string::npos)
             {
                 F = &(*it);
                 break;
             }
         }
     }
-    if (!F)
-        return false;
-    for(Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it!=ie; it++)
+    if (!F) return false;
+    for (Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it != ie; it++)
     {
-        const Use *u = &*it;
+        const Use* u = &*it;
         const Value* user = u->getUser();
         const Instruction* inst = SVFUtil::dyn_cast<Instruction>(user);
         CxtLockSetStr y = getStringArg(inst, 0);
@@ -119,12 +117,12 @@ bool LockResultValidator::collectLockTargets()
         const SVFInstruction* svfMemInst = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(memInst);
 
         instToCxtLockSet[svfMemInst] = y;
-        if(const StoreInst* store = SVFUtil::dyn_cast<StoreInst> (memInst))
+        if (const StoreInst* store = SVFUtil::dyn_cast<StoreInst>(memInst))
         {
-            if(const BinaryOperator* bop = SVFUtil::dyn_cast<BinaryOperator> (store->getValueOperand()))
+            if (const BinaryOperator* bop = SVFUtil::dyn_cast<BinaryOperator>(store->getValueOperand()))
             {
                 const Value* v = bop->getOperand(0);
-                const Instruction* prevInst = SVFUtil::dyn_cast<LoadInst> (v);
+                const Instruction* prevInst = SVFUtil::dyn_cast<LoadInst>(v);
                 const SVFInstruction* svfPrevInst = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(prevInst);
                 instToCxtLockSet[svfPrevInst] = y;
             }
@@ -138,39 +136,35 @@ LockResultValidator::LOCK_FLAG LockResultValidator::validateStmtInLock()
     SVFIR* pag = SVFIR::getPAG();
     LockResultValidator::LOCK_FLAG res = LockResultValidator::LOCK_TRUE;
     LockAnalysis::CxtStmtToCxtLockSet analyedLS = _la->getCSTCLS();
-    for(LockAnalysis::CxtStmtToCxtLockSet::iterator it = analyedLS.begin(),
-            eit = analyedLS.end(); it!=eit; it++)
+    for (LockAnalysis::CxtStmtToCxtLockSet::iterator it = analyedLS.begin(), eit = analyedLS.end(); it != eit; it++)
     {
         const SVFInstruction* inst = ((*it).first).getStmt();
         bool interestedInst = true;
-        for(const SVFStmt* stmt : pag->getSVFStmtList(pag->getICFG()->getICFGNode(inst)))
+        for (const SVFStmt* stmt : pag->getSVFStmtList(pag->getICFG()->getICFGNode(inst)))
         {
-            if(!SVFUtil::isa<LoadStmt>(stmt) && !SVFUtil::isa<StoreStmt>(stmt))
-                interestedInst = false;
+            if (!SVFUtil::isa<LoadStmt>(stmt) && !SVFUtil::isa<StoreStmt>(stmt)) interestedInst = false;
         }
-        if(interestedInst==false)
-            continue;
+        if (interestedInst == false) continue;
         const SVFFunction* F = inst->getFunction();
-        if(inFilter(F->getName()))
-            continue;
+        if (inFilter(F->getName())) continue;
         CxtLockSetStr LS = instToCxtLockSet[inst];
-        if(LS.size() != (*it).second.size())
+        if (LS.size() != (*it).second.size())
         {
             if (Options::PrintValidRes())
             {
                 outs() << errMsg("\nValidate Stmt's Lock : Wrong at: ") << inst->toString() << "\n";
                 outs() << "Reason: The number of lock on current stmt is wrong\n";
                 outs() << "\n----Given locks:\n";
-                for (CxtLockSetStr::iterator it1 = LS.begin(),eit1 = LS.end(); it1 != eit1; it++)
+                for (CxtLockSetStr::iterator it1 = LS.begin(), eit1 = LS.end(); it1 != eit1; it++)
                 {
                     outs() << "Lock  " << *it1 << " ";
                 }
                 outs() << "\n----Analysis locks:\n";
-                for (LockAnalysis::CxtLockSet::iterator it2 = (*it).second.begin(),
-                        eit2 = (*it).second.end(); it2 != eit2; ++it)
+                for (LockAnalysis::CxtLockSet::iterator it2 = (*it).second.begin(), eit2 = (*it).second.end();
+                     it2 != eit2; ++it)
                 {
                     const SVFInstruction* call = (*it2).getStmt();
-                    outs()<<"Lock  " << call->toString() << " ";
+                    outs() << "Lock  " << call->toString() << " ";
                 }
                 outs() << "\n";
             }
@@ -178,15 +172,14 @@ LockResultValidator::LOCK_FLAG LockResultValidator::validateStmtInLock()
         }
         LockAnalysis::CxtLockSet LSA = (*it).second;
 
-        for(LockAnalysis::CxtLockSet::iterator it3 = LSA.begin(), eit3=LSA.end(); it3!=eit3; it3++)
+        for (LockAnalysis::CxtLockSet::iterator it3 = LSA.begin(), eit3 = LSA.end(); it3 != eit3; it3++)
         {
             const SVFInstruction* call = (*it3).getStmt();
-            if(SVFUtil::isCallSite(call) == false)
-                continue;
+            if (SVFUtil::isCallSite(call) == false) continue;
             std::string lockName = SVFUtil::getSVFCallSite(call).getArgOperand(0)->getName();
-            if(!match(lockName, LS))
+            if (!match(lockName, LS))
             {
-                if(Options::PrintValidRes())
+                if (Options::PrintValidRes())
                 {
                     outs() << "\nValidate Stmt's Lock : Wrong at (" << inst->toString() << ")\n";
                     outs() << "Reason: The number of lock on current stmt is wrong\n";
@@ -202,8 +195,7 @@ LockResultValidator::LOCK_FLAG LockResultValidator::validateStmtInLock()
 void LockResultValidator::analyze()
 {
     outs() << SVFUtil::pasMsg(" --- Lock Analysis Result Validation ---\n");
-    if(!collectLockTargets())
-        return;
+    if (!collectLockTargets()) return;
     std::string errstring;
     errstring = getOutput("Validate Lock Analysis :", validateStmtInLock());
     outs() << "======" << errstring << "======\n";
@@ -213,37 +205,34 @@ void LockResultValidator::analyze()
     validator.analyze();
 }
 
-const Instruction* LockResultValidator::getPreviousMemoryAccessInst( const Instruction* I)
+const Instruction* LockResultValidator::getPreviousMemoryAccessInst(const Instruction* I)
 {
     I = I->getPrevNode();
     while (I)
     {
-        if (SVFUtil::isa<LoadInst>(I) || SVFUtil::isa<StoreInst>(I))
-            return I;
+        if (SVFUtil::isa<LoadInst>(I) || SVFUtil::isa<StoreInst>(I)) return I;
         SVFFunction* callee = nullptr;
 
-        if(LLVMUtil::isCallSite(I))
+        if (LLVMUtil::isCallSite(I))
         {
             PTACallGraph::FunctionSet callees;
             const SVFInstruction* svfInst = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I);
             _la->getTCT()->getThreadCallGraph()->getCallees(getCBN(svfInst), callees);
 
-            for(PTACallGraph::FunctionSet::const_iterator cit = callees.begin(),
-                    ecit = callees.end(); cit!=ecit; cit++)
+            for (PTACallGraph::FunctionSet::const_iterator cit = callees.begin(), ecit = callees.end(); cit != ecit;
+                 cit++)
             {
-                if(*cit != nullptr)
+                if (*cit != nullptr)
                 {
-                    callee = const_cast<SVFFunction*> (*cit);
+                    callee = const_cast<SVFFunction*>(*cit);
                     break;
                 }
-
             }
         }
 
         if (callee)
         {
-            if (callee->getName().find("llvm.memset") != std::string::npos)
-                return I;
+            if (callee->getName().find("llvm.memset") != std::string::npos) return I;
         }
         I = I->getPrevNode();
     }

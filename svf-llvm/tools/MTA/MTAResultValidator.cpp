@@ -22,17 +22,16 @@ namespace SVF
 class MHPValidator : public RaceResultValidator
 {
 public:
-    MHPValidator(MHP *mhp) :mhp(mhp)
-    {
-    }
+    MHPValidator(MHP* mhp) : mhp(mhp) {}
     bool mayHappenInParallel(const Instruction* I1, const Instruction* I2)
     {
         const SVFInstruction* inst1 = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I1);
         const SVFInstruction* inst2 = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I2);
         return mhp->mayHappenInParallel(inst1, inst2);
     }
+
 private:
-    MHP *mhp;
+    MHP* mhp;
 };
 
 } // End namespace SVF
@@ -45,28 +44,23 @@ void MTAResultValidator::analyze()
     validator.init(mhp->getTCT()->getSVFModule());
     validator.analyze();
 
-
     std::string errstring;
-    if (!collectCallsiteTargets())
-        return;
-    if (!collectCxtThreadTargets())
-        return;
+    if (!collectCallsiteTargets()) return;
+    if (!collectCxtThreadTargets()) return;
 
     errstring = getOutput("Validate CxtThread:", validateCxtThread());
     outs() << "======" << errstring << "======\n";
 
-    if (!collectTCTTargets())
-        return;
+    if (!collectTCTTargets()) return;
     errstring = getOutput("Validate TCT:     ", validateTCT());
     outs() << "======" << errstring << "======\n";
 
-    if (!collectInterleavingTargets())
-        return;
+    if (!collectInterleavingTargets()) return;
     errstring = getOutputforInterlevAnalysis("Validate Interleaving:", validateInterleaving());
     outs() << "======" << errstring << "======\n";
 }
 
-std::vector<std::string> &MTAResultValidator::split(const std::string &s, char delim, std::vector<std::string> &elems)
+std::vector<std::string>& MTAResultValidator::split(const std::string& s, char delim, std::vector<std::string>& elems)
 {
     std::stringstream ss(s);
     std::string item;
@@ -77,7 +71,7 @@ std::vector<std::string> &MTAResultValidator::split(const std::string &s, char d
     return elems;
 }
 
-std::vector<std::string> MTAResultValidator::split(const std::string &s, char delim)
+std::vector<std::string> MTAResultValidator::split(const std::string& s, char delim)
 {
     std::vector<std::string> elems;
     split(s, delim, elems);
@@ -89,7 +83,7 @@ NodeID MTAResultValidator::getIntArg(const Instruction* inst, u32_t arg_num)
     const CallBase* cs = LLVMUtil::getLLVMCallSite(inst);
     const ConstantInt* x = SVFUtil::dyn_cast<ConstantInt>(cs->getArgOperand(arg_num));
     assert((arg_num < cs->arg_size()) && "Does not has this argument");
-    return (NodeID) x->getSExtValue();
+    return (NodeID)x->getSExtValue();
 }
 
 std::vector<std::string> MTAResultValidator::getStringArg(const Instruction* inst, unsigned int arg_num)
@@ -98,7 +92,7 @@ std::vector<std::string> MTAResultValidator::getStringArg(const Instruction* ins
     const CallBase* cs = LLVMUtil::getLLVMCallSite(inst);
     assert((arg_num < cs->arg_size()) && "Does not has this argument");
     const Constant* arrayinst = SVFUtil::dyn_cast<Constant>(cs->getArgOperand(arg_num));
-    if(const GetElementPtrInst* gepinst = SVFUtil::dyn_cast<GetElementPtrInst>(cs->getArgOperand(arg_num)))
+    if (const GetElementPtrInst* gepinst = SVFUtil::dyn_cast<GetElementPtrInst>(cs->getArgOperand(arg_num)))
     {
         arrayinst = SVFUtil::dyn_cast<Constant>(gepinst->getOperand(0));
     }
@@ -116,8 +110,7 @@ CallStrCxt MTAResultValidator::getCxtArg(const Instruction* inst, unsigned int a
 {
     std::vector<std::string> x = getStringArg(inst, arg_num);
     CallStrCxt cxt;
-    if (0 == x.size())
-        return cxt;
+    if (0 == x.size()) return cxt;
     // Deal with the second argument that records all callsites
     for (std::vector<std::string>::iterator i = x.begin(); i != x.end(); i++)
     {
@@ -139,26 +132,24 @@ const Instruction* MTAResultValidator::getPreviousMemoryAccessInst(const Instruc
     I = I->getPrevNode();
     while (I)
     {
-        if (SVFUtil::isa<LoadInst>(I) || SVFUtil::isa<StoreInst>(I))
-            return I;
+        if (SVFUtil::isa<LoadInst>(I) || SVFUtil::isa<StoreInst>(I)) return I;
         I = I->getPrevNode();
     }
     return nullptr;
 }
 
-inline std::string MTAResultValidator::getOutput(const char *scenario, bool analysisRes)
+inline std::string MTAResultValidator::getOutput(const char* scenario, bool analysisRes)
 {
     std::string ret(scenario);
     ret += "\t";
 
-    if (analysisRes)
-        ret += SVFUtil::sucMsg("SUCCESS");
+    if (analysisRes) ret += SVFUtil::sucMsg("SUCCESS");
     else
         ret += SVFUtil::errMsg("FAILURE");
     return ret;
 }
 
-inline std::string MTAResultValidator::getOutputforInterlevAnalysis(const char *scenario, INTERLEV_FLAG analysisRes)
+inline std::string MTAResultValidator::getOutputforInterlevAnalysis(const char* scenario, INTERLEV_FLAG analysisRes)
 {
     std::string ret(scenario);
     ret += "\t";
@@ -181,8 +172,7 @@ inline std::string MTAResultValidator::getOutputforInterlevAnalysis(const char *
 
 bool MTAResultValidator::matchCxt(const CallStrCxt cxt1, const CallStrCxt cxt2) const
 {
-    if (cxt1.size() != cxt2.size())
-        return false;
+    if (cxt1.size() != cxt2.size()) return false;
     return std::equal(cxt1.begin(), cxt1.end(), cxt2.begin());
 }
 
@@ -195,7 +185,8 @@ void MTAResultValidator::dumpCxt(const CallStrCxt& cxt) const
     {
         rawstr << " ' " << *it << " ' ";
         rawstr << tcg->getCallSite(*it)->getCallSite()->toString();
-        rawstr << "  call  " << tcg->getCallSite(*it)->getCaller()->getName() << "-->" << tcg->getCalleeOfCallSite(*it)->getName() << ", \n";
+        rawstr << "  call  " << tcg->getCallSite(*it)->getCaller()->getName() << "-->"
+               << tcg->getCalleeOfCallSite(*it)->getName() << ", \n";
     }
     rawstr << " ]";
     outs() << "max cxt = " << cxt.size() << rawstr.str() << "\n";
@@ -246,20 +237,19 @@ bool MTAResultValidator::collectCallsiteTargets()
 bool MTAResultValidator::collectCxtThreadTargets()
 {
     const Function* F = nullptr;
-    for (Module &M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
+    for (Module& M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
     {
-        for(auto it = M.begin(); it != M.end(); it++)
+        for (auto it = M.begin(); it != M.end(); it++)
         {
             const std::string fName = (*it).getName().str();
-            if(fName.find(CXT_THREAD) != std::string::npos)
+            if (fName.find(CXT_THREAD) != std::string::npos)
             {
                 F = &(*it);
                 break;
             }
         }
     }
-    if (!F)
-        return false;
+    if (!F) return false;
 
     // Push main thread into vthdToCxt;
     CallStrCxt main_cxt;
@@ -269,7 +259,7 @@ bool MTAResultValidator::collectCxtThreadTargets()
 
     for (Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it != ie; ++it)
     {
-        const Use *u = &*it;
+        const Use* u = &*it;
         const Value* user = u->getUser();
         const Instruction* inst = SVFUtil::dyn_cast<Instruction>(user);
 
@@ -286,24 +276,23 @@ bool MTAResultValidator::collectTCTTargets()
 
     // Collect call sites of all TCT_ACCESS function calls.
     const Function* F = nullptr;
-    for (Module &M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
+    for (Module& M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
     {
-        for(auto it = M.begin(); it != M.end(); it++)
+        for (auto it = M.begin(); it != M.end(); it++)
         {
             const std::string fName = (*it).getName().str();
-            if(fName.find(TCT_ACCESS) != std::string::npos)
+            if (fName.find(TCT_ACCESS) != std::string::npos)
             {
                 F = &(*it);
                 break;
             }
         }
     }
-    if (!F)
-        return false;
+    if (!F) return false;
 
     for (Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it != ie; ++it)
     {
-        const Use *u = &*it;
+        const Use* u = &*it;
         const Value* user = u->getUser();
         const Instruction* inst = SVFUtil::dyn_cast<Instruction>(user);
 
@@ -324,24 +313,23 @@ bool MTAResultValidator::collectInterleavingTargets()
 
     // Collect call sites of all INTERLEV_ACCESS function calls.
     const Function* F = nullptr;
-    for (Module &M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
+    for (Module& M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
     {
-        for(auto it = M.begin(); it != M.end(); it++)
+        for (auto it = M.begin(); it != M.end(); it++)
         {
             const std::string fName = (*it).getName().str();
-            if(fName.find(INTERLEV_ACCESS) != std::string::npos)
+            if (fName.find(INTERLEV_ACCESS) != std::string::npos)
             {
                 F = &(*it);
                 break;
             }
         }
     }
-    if (!F)
-        return false;
+    if (!F) return false;
 
     for (Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it != ie; ++it)
     {
-        const Use *u = &*it;
+        const Use* u = &*it;
         const Value* user = u->getUser();
         const Instruction* inst = SVFUtil::dyn_cast<Instruction>(user);
 
@@ -453,8 +441,9 @@ bool MTAResultValidator::validateTCT()
     {
         bool res_node = true;
         TCTNode* pnode = tct->getTCTNode(i);
-        for (TCT::ThreadCreateEdgeSet::const_iterator ci = tct->getChildrenBegin(pnode), cei = tct->getChildrenEnd(pnode); ci != cei;
-                ci++)
+        for (TCT::ThreadCreateEdgeSet::const_iterator ci = tct->getChildrenBegin(pnode),
+                                                      cei = tct->getChildrenEnd(pnode);
+             ci != cei; ci++)
         {
             NodeID tid = (*ci)->getDstID();
             if (rthdToChildren[i].find(tid) == rthdToChildren[i].end())
@@ -483,8 +472,9 @@ bool MTAResultValidator::validateTCT()
                 outs() << rthdTovthd[gid] << ", ";
             }
             outs() << "\nAnalysis children:\t";
-            for (TCT::ThreadCreateEdgeSet::const_iterator ci = tct->getChildrenBegin(pnode), cei = tct->getChildrenEnd(pnode); ci != cei;
-                    ci++)
+            for (TCT::ThreadCreateEdgeSet::const_iterator ci = tct->getChildrenBegin(pnode),
+                                                          cei = tct->getChildrenEnd(pnode);
+                 ci != cei; ci++)
             {
                 NodeID tid = (*ci)->getDstID();
                 outs() << rthdTovthd[tid] << ", ";
@@ -499,7 +489,8 @@ MTAResultValidator::INTERLEV_FLAG MTAResultValidator::validateInterleaving()
 {
     MTAResultValidator::INTERLEV_FLAG res = MTAResultValidator::INTERLEV_TRUE;
 
-    for (MHP::InstToThreadStmtSetMap::iterator seti = instToTSMap.begin(), eseti = instToTSMap.end(); seti != eseti; ++seti)
+    for (MHP::InstToThreadStmtSetMap::iterator seti = instToTSMap.begin(), eseti = instToTSMap.end(); seti != eseti;
+         ++seti)
     {
         const SVFInstruction* inst = (*seti).first;
 
@@ -512,8 +503,8 @@ MTAResultValidator::INTERLEV_FLAG MTAResultValidator::validateInterleaving()
                 outs() << errMsg("\n Validate Interleaving: Wrong at : ") << inst->getSourceLoc() << "\n";
                 outs() << "Reason: The number of thread running on stmt is wrong\n";
                 outs() << "\n----Given threads:\n";
-                for (MHP::CxtThreadStmtSet::iterator thdlevi = (*seti).second.begin(), ethdlevi = (*seti).second.end(); thdlevi != ethdlevi;
-                        ++thdlevi)
+                for (MHP::CxtThreadStmtSet::iterator thdlevi = (*seti).second.begin(), ethdlevi = (*seti).second.end();
+                     thdlevi != ethdlevi; ++thdlevi)
                 {
                     outs() << "TID " << rthdTovthd[(*thdlevi).getTid()] << ": ";
                     dumpCxt((*thdlevi).getContext());
@@ -533,7 +524,8 @@ MTAResultValidator::INTERLEV_FLAG MTAResultValidator::validateInterleaving()
         {
             const CxtThreadStmt& ts = *it;
             bool matched = false;
-            for (MHP::CxtThreadStmtSet::iterator it2 = (*seti).second.begin(), eit2 = (*seti).second.end(); it2 != eit2; ++it2)
+            for (MHP::CxtThreadStmtSet::iterator it2 = (*seti).second.begin(), eit2 = (*seti).second.end(); it2 != eit2;
+                 ++it2)
             {
                 const CxtThreadStmt& ts2 = *it2;
 
@@ -555,8 +547,7 @@ MTAResultValidator::INTERLEV_FLAG MTAResultValidator::validateInterleaving()
                             dumpInterlev(lev);
                         }
 
-                        if (MTAResultValidator::INTERLEV_IMPRECISE > res)
-                            res = MTAResultValidator::INTERLEV_IMPRECISE;
+                        if (MTAResultValidator::INTERLEV_IMPRECISE > res) res = MTAResultValidator::INTERLEV_IMPRECISE;
 
                         if (lev.count() >= lev2.count())
                         {
@@ -569,8 +560,7 @@ MTAResultValidator::INTERLEV_FLAG MTAResultValidator::validateInterleaving()
                                     break;
                                 }
                             }
-                            if (!findeveryelement)
-                                res = MTAResultValidator::INTERLEV_UNSOUND;
+                            if (!findeveryelement) res = MTAResultValidator::INTERLEV_UNSOUND;
                         }
                         else
                             res = MTAResultValidator::INTERLEV_UNSOUND;
@@ -602,26 +592,25 @@ void RaceResultValidator::collectValidationTargets()
     // Collect call sites of all RC_ACCESS function calls.
     std::vector<const CallBase*> csInsts;
     const Function* F = nullptr;
-    for (Module &M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
+    for (Module& M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
     {
-        for(auto it = M.begin(); it != M.end(); it++)
+        for (auto it = M.begin(); it != M.end(); it++)
         {
             const std::string fName = (*it).getName().str();
-            if(fName.find(RC_ACCESS) != std::string::npos)
+            if (fName.find(RC_ACCESS) != std::string::npos)
             {
                 F = &(*it);
                 break;
             }
         }
     }
-    if (!F)     return;
+    if (!F) return;
 
-    for (Value::const_use_iterator it = F->use_begin(), ie =
-                F->use_end(); it != ie; ++it)
+    for (Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it != ie; ++it)
     {
-        const Use *u = &*it;
-        const Value *user = u->getUser();
-        if(LLVMUtil::isCallSite(user))
+        const Use* u = &*it;
+        const Value* user = u->getUser();
+        if (LLVMUtil::isCallSite(user))
         {
             const CallBase* csInst = LLVMUtil::getLLVMCallSite(user);
             csInsts.push_back(csInst);
@@ -654,7 +643,7 @@ void RaceResultValidator::validateAll()
     // Iterate every memory access pair to perform the validation.
     for (int i = 0, e = accessPairs.size(); i != e; ++i)
     {
-        const AccessPair &ap = accessPairs[i];
+        const AccessPair& ap = accessPairs[i];
         const Instruction* I1 = ap.getInstruction1();
         const Instruction* I2 = ap.getInstruction2();
 
@@ -668,26 +657,19 @@ void RaceResultValidator::validateAll()
                         << LLVMModuleSet::getLLVMModuleSet()->getSVFValue(I2)->getSourceLoc() << ")\n";
         if (selectedValidationScenarios & RC_ALIASES)
         {
-            SVFUtil::outs() << "\t"
-                            << getOutput("ALIASES", alias, ap.isFlaged(RC_ALIASES))
-                            << "\n";
+            SVFUtil::outs() << "\t" << getOutput("ALIASES", alias, ap.isFlaged(RC_ALIASES)) << "\n";
         }
         if (selectedValidationScenarios & RC_MHP)
         {
-            SVFUtil::outs() << "\t"
-                            << getOutput("MHP", mhp, ap.isFlaged(RC_MHP)) << "\n";
+            SVFUtil::outs() << "\t" << getOutput("MHP", mhp, ap.isFlaged(RC_MHP)) << "\n";
         }
         if (selectedValidationScenarios & RC_PROTECTED)
         {
-            SVFUtil::outs() << "\t"
-                            << getOutput("PROTECT", protect,
-                                         ap.isFlaged(RC_PROTECTED)) << "\n";
+            SVFUtil::outs() << "\t" << getOutput("PROTECT", protect, ap.isFlaged(RC_PROTECTED)) << "\n";
         }
         if (selectedValidationScenarios & RC_RACE)
         {
-            SVFUtil::outs() << "\t"
-                            << getOutput("RACE", racy, ap.isFlaged(RC_RACE))
-                            << "\n";
+            SVFUtil::outs() << "\t" << getOutput("RACE", racy, ap.isFlaged(RC_RACE)) << "\n";
         }
     }
 
@@ -699,16 +681,13 @@ const Instruction* RaceResultValidator::getPreviousMemoryAccessInst(const Instru
     I = I->getPrevNode();
     while (I)
     {
-        if (SVFUtil::isa<LoadInst>(I) || SVFUtil::isa<StoreInst>(I))
-            return I;
+        if (SVFUtil::isa<LoadInst>(I) || SVFUtil::isa<StoreInst>(I)) return I;
 
         const SVFInstruction* inst = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I);
 
-        if (const SVFFunction *callee = SVFUtil::getCallee(inst))
+        if (const SVFFunction* callee = SVFUtil::getCallee(inst))
         {
-            if (callee->getName().find("llvm.memset") != std::string::npos)
-                return I;
-
+            if (callee->getName().find("llvm.memset") != std::string::npos) return I;
         }
         I = I->getPrevNode();
     }

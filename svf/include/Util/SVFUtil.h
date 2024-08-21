@@ -47,27 +47,27 @@ namespace SVFUtil
 {
 
 /// Overwrite llvm::outs()
-inline std::ostream &outs()
+inline std::ostream& outs()
 {
     return std::cout;
 }
 
 /// Overwrite llvm::errs()
-inline std::ostream  &errs()
+inline std::ostream& errs()
 {
     return std::cerr;
 }
 
 /// Dump sparse bitvector set
-void dumpSet(NodeBS To, OutStream & O = SVFUtil::outs());
-void dumpSet(PointsTo To, OutStream & O = SVFUtil::outs());
+void dumpSet(NodeBS To, OutStream& O = SVFUtil::outs());
+void dumpSet(PointsTo To, OutStream& O = SVFUtil::outs());
 
 /// Dump points-to set
-void dumpPointsToSet(unsigned node, NodeBS To) ;
+void dumpPointsToSet(unsigned node, NodeBS To);
 void dumpSparseSet(const NodeBS& To);
 
 /// Dump alias set
-void dumpAliasSet(unsigned node, NodeBS To) ;
+void dumpAliasSet(unsigned node, NodeBS To);
 
 /// Returns successful message by converting a string into green string output
 std::string sucMsg(const std::string& msg);
@@ -80,18 +80,17 @@ void writeWrnMsg(const std::string& msg);
 
 /// Print error message by converting a string into red string output
 //@{
-std::string  errMsg(const std::string& msg);
-std::string  bugMsg1(const std::string& msg);
-std::string  bugMsg2(const std::string& msg);
-std::string  bugMsg3(const std::string& msg);
+std::string errMsg(const std::string& msg);
+std::string bugMsg1(const std::string& msg);
+std::string bugMsg2(const std::string& msg);
+std::string bugMsg3(const std::string& msg);
 //@}
 
 /// Print each pass/phase message by converting a string into blue string output
-std::string  pasMsg(const std::string& msg);
+std::string pasMsg(const std::string& msg);
 
 /// Print memory usage in KB.
-void reportMemoryUsageKB(const std::string& infor,
-                         OutStream& O = SVFUtil::outs());
+void reportMemoryUsageKB(const std::string& infor, OutStream& O = SVFUtil::outs());
 
 /// Get memory usage from system file. Return TRUE if succeed.
 bool getMemoryUsageKB(u32_t* vmrss_kb, u32_t* vmsize_kb);
@@ -104,36 +103,32 @@ void increaseStackSize();
  * 1. PointsTo with smaller size is smaller than the other;
  * 2. If the sizes are equal, comparing the points-to targets.
  */
-inline bool cmpPts (const PointsTo& lpts,const PointsTo& rpts)
+inline bool cmpPts(const PointsTo& lpts, const PointsTo& rpts)
 {
-    if (lpts.count() != rpts.count())
-        return (lpts.count() < rpts.count());
+    if (lpts.count() != rpts.count()) return (lpts.count() < rpts.count());
     else
     {
         PointsTo::iterator bit = lpts.begin(), eit = lpts.end();
         PointsTo::iterator rbit = rpts.begin(), reit = rpts.end();
         for (; bit != eit && rbit != reit; bit++, rbit++)
         {
-            if (*bit != *rbit)
-                return (*bit < *rbit);
+            if (*bit != *rbit) return (*bit < *rbit);
         }
 
         return false;
     }
 }
 
-inline bool cmpNodeBS(const NodeBS& lpts,const NodeBS& rpts)
+inline bool cmpNodeBS(const NodeBS& lpts, const NodeBS& rpts)
 {
-    if (lpts.count() != rpts.count())
-        return (lpts.count() < rpts.count());
+    if (lpts.count() != rpts.count()) return (lpts.count() < rpts.count());
     else
     {
         NodeBS::iterator bit = lpts.begin(), eit = lpts.end();
         NodeBS::iterator rbit = rpts.begin(), reit = rpts.end();
         for (; bit != eit && rbit != reit; bit++, rbit++)
         {
-            if (*bit != *rbit)
-                return (*bit < *rbit);
+            if (*bit != *rbit) return (*bit < *rbit);
         }
 
         return false;
@@ -156,7 +151,7 @@ typedef struct equalNodeBS
     }
 } equalNodeBS;
 
-inline NodeBS ptsToNodeBS(const PointsTo &pts)
+inline NodeBS ptsToNodeBS(const PointsTo& pts)
 {
     NodeBS nbs;
     for (const NodeID o : pts) nbs.set(o);
@@ -178,8 +173,7 @@ inline bool isCallSite(const SVFInstruction* inst)
 /// Whether an instruction is a call or invoke instruction
 inline bool isCallSite(const SVFValue* val)
 {
-    if(SVFUtil::isa<SVFCallInst>(val))
-        return true;
+    if (SVFUtil::isa<SVFCallInst>(val)) return true;
     else
         return false;
 }
@@ -187,8 +181,7 @@ inline bool isCallSite(const SVFValue* val)
 /// Whether an instruction is a callsite in the application code, excluding llvm intrinsic calls
 inline bool isNonInstricCallSite(const SVFInstruction* inst)
 {
-    if(isIntrinsicInst(inst))
-        return false;
+    if (isIntrinsicInst(inst)) return false;
     return isCallSite(inst);
 }
 
@@ -243,20 +236,18 @@ inline const SVFFunction* getCallee(const CallSite cs)
     return cs.getCalledFunction();
 }
 
-inline const SVFFunction* getCallee(const SVFInstruction *inst)
+inline const SVFFunction* getCallee(const SVFInstruction* inst)
 {
-    if (!isCallSite(inst))
-        return nullptr;
+    if (!isCallSite(inst)) return nullptr;
     CallSite cs(inst);
     return getCallee(cs);
 }
 //@}
 
 /// Given a map mapping points-to sets to a count, adds from into to.
-template <typename Data>
-void mergePtsOccMaps(Map<Data, unsigned> &to, const Map<Data, unsigned> from)
+template <typename Data> void mergePtsOccMaps(Map<Data, unsigned>& to, const Map<Data, unsigned> from)
 {
-    for (const typename Map<Data, unsigned>::value_type &ptocc : from)
+    for (const typename Map<Data, unsigned>::value_type& ptocc : from)
     {
         to[ptocc.first] += ptocc.second;
     }
@@ -266,27 +257,25 @@ void mergePtsOccMaps(Map<Data, unsigned> &to, const Map<Data, unsigned> from)
 std::string hclustMethodToString(hclust_fast_methods method);
 
 /// Inserts an element into a Set/CondSet (with ::insert).
-template <typename Key, typename KeySet>
-inline void insertKey(const Key &key, KeySet &keySet)
+template <typename Key, typename KeySet> inline void insertKey(const Key& key, KeySet& keySet)
 {
     keySet.insert(key);
 }
 
 /// Inserts a NodeID into a NodeBS.
-inline void insertKey(const NodeID &key, NodeBS &keySet)
+inline void insertKey(const NodeID& key, NodeBS& keySet)
 {
     keySet.set(key);
 }
 
 /// Removes an element from a Set/CondSet (or anything implementing ::erase).
-template <typename Key, typename KeySet>
-inline void removeKey(const Key &key, KeySet &keySet)
+template <typename Key, typename KeySet> inline void removeKey(const Key& key, KeySet& keySet)
 {
     keySet.erase(key);
 }
 
 /// Removes a NodeID from a NodeBS.
-inline void removeKey(const NodeID &key, NodeBS &keySet)
+inline void removeKey(const NodeID& key, NodeBS& keySet)
 {
     keySet.reset(key);
 }
@@ -304,7 +293,8 @@ bool startAnalysisLimitTimer(unsigned timeLimit);
 void stopAnalysisLimitTimer(bool limitTimerSet);
 
 /// Return true if the call is an external call (external library in function summary table)
-/// If the library function is redefined in the application code (e.g., memcpy), it will return false and will not be treated as an external call.
+/// If the library function is redefined in the application code (e.g., memcpy), it will return false and will not be
+/// treated as an external call.
 //@{
 inline bool isExtCall(const SVFFunction* fun)
 {
@@ -326,8 +316,7 @@ inline bool isMemsetExtFun(const SVFFunction* fun)
 /// note that these two functions are not suppose to be used externally
 inline bool isHeapAllocExtFunViaRet(const SVFFunction* fun)
 {
-    return fun && (ExtAPI::getExtAPI()->is_alloc(fun)
-                   || ExtAPI::getExtAPI()->is_realloc(fun));
+    return fun && (ExtAPI::getExtAPI()->is_alloc(fun) || ExtAPI::getExtAPI()->is_realloc(fun));
 }
 
 inline bool isHeapAllocExtFunViaArg(const SVFFunction* fun)
@@ -363,9 +352,8 @@ inline const SVFFunction* getProgFunction(SVFModule* svfModule, const std::strin
 {
     for (SVFModule::const_iterator it = svfModule->begin(), eit = svfModule->end(); it != eit; ++it)
     {
-        const SVFFunction *fun = *it;
-        if (fun->getName()==funName)
-            return fun;
+        const SVFFunction* fun = *it;
+        if (fun->getName() == funName) return fun;
     }
     return nullptr;
 }
@@ -375,27 +363,23 @@ inline const SVFFunction* getProgEntryFunction(SVFModule* svfModule)
 {
     for (SVFModule::const_iterator it = svfModule->begin(), eit = svfModule->end(); it != eit; ++it)
     {
-        const SVFFunction *fun = *it;
-        if (isProgEntryFunction(fun))
-            return (fun);
+        const SVFFunction* fun = *it;
+        if (isProgEntryFunction(fun)) return (fun);
     }
     return nullptr;
 }
 
 /// Return true if this is a program exit function call
 //@{
-inline bool isProgExitFunction (const SVFFunction * fun)
+inline bool isProgExitFunction(const SVFFunction* fun)
 {
-    return fun && (fun->getName() == "exit" ||
-                   fun->getName() == "__assert_rtn" ||
-                   fun->getName() == "__assert_fail" );
+    return fun && (fun->getName() == "exit" || fun->getName() == "__assert_rtn" || fun->getName() == "__assert_fail");
 }
 
 /// Return true if this argument belongs to an uncalled function
 inline bool isArgOfUncalledFunction(const SVFValue* svfval)
 {
-    if(const SVFArgument* arg = SVFUtil::dyn_cast<SVFArgument>(svfval))
-        return arg->isArgOfUncalledFunction();
+    if (const SVFArgument* arg = SVFUtil::dyn_cast<SVFArgument>(svfval)) return arg->isArgOfUncalledFunction();
     else
         return false;
 }
@@ -406,7 +390,7 @@ inline const SVFValue* getForkedFun(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->getForkedFun(cs);
 }
-inline const SVFValue* getForkedFun(const SVFInstruction *inst)
+inline const SVFValue* getForkedFun(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->getForkedFun(inst);
 }
@@ -423,7 +407,7 @@ inline bool isExtCall(const CallSite cs)
     return isExtCall(getCallee(cs));
 }
 
-inline bool isExtCall(const SVFInstruction *inst)
+inline bool isExtCall(const SVFInstruction* inst)
 {
     return isExtCall(getCallee(inst));
 }
@@ -433,7 +417,7 @@ inline bool isHeapAllocExtCallViaArg(const CallSite cs)
     return isHeapAllocExtFunViaArg(getCallee(cs));
 }
 
-inline bool isHeapAllocExtCallViaArg(const SVFInstruction *inst)
+inline bool isHeapAllocExtCallViaArg(const SVFInstruction* inst)
 {
     return isHeapAllocExtFunViaArg(getCallee(inst));
 }
@@ -445,7 +429,7 @@ inline bool isHeapAllocExtCallViaRet(const CallSite cs)
     return isPtrTy && isHeapAllocExtFunViaRet(getCallee(cs));
 }
 
-inline bool isHeapAllocExtCallViaRet(const SVFInstruction *inst)
+inline bool isHeapAllocExtCallViaRet(const SVFInstruction* inst)
 {
     bool isPtrTy = inst->getType()->isPointerTy();
     return isPtrTy && isHeapAllocExtFunViaRet(getCallee(inst));
@@ -456,7 +440,7 @@ inline bool isHeapAllocExtCall(const CallSite cs)
     return isHeapAllocExtCallViaRet(cs) || isHeapAllocExtCallViaArg(cs);
 }
 
-inline bool isHeapAllocExtCall(const SVFInstruction *inst)
+inline bool isHeapAllocExtCall(const SVFInstruction* inst)
 {
     return isHeapAllocExtCallViaRet(inst) || isHeapAllocExtCallViaArg(inst);
 }
@@ -467,7 +451,7 @@ inline int getHeapAllocHoldingArgPosition(const CallSite cs)
     return getHeapAllocHoldingArgPosition(getCallee(cs));
 }
 
-inline int getHeapAllocHoldingArgPosition(const SVFInstruction *inst)
+inline int getHeapAllocHoldingArgPosition(const SVFInstruction* inst)
 {
     return getHeapAllocHoldingArgPosition(getCallee(inst));
 }
@@ -479,7 +463,7 @@ inline bool isReallocExtCall(const CallSite cs)
     return isPtrTy && isReallocExtFun(getCallee(cs));
 }
 
-inline bool isReallocExtCall(const SVFInstruction *inst)
+inline bool isReallocExtCall(const SVFInstruction* inst)
 {
     bool isPtrTy = inst->getType()->isPointerTy();
     return isPtrTy && isReallocExtFun(getCallee(inst));
@@ -492,7 +476,7 @@ inline bool isThreadForkCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isTDFork(cs);
 }
-inline bool isThreadForkCall(const SVFInstruction *inst)
+inline bool isThreadForkCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isTDFork(inst);
 }
@@ -504,7 +488,7 @@ inline bool isHareParForCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isHareParFor(cs);
 }
-inline bool isHareParForCall(const SVFInstruction *inst)
+inline bool isHareParForCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isHareParFor(inst);
 }
@@ -516,7 +500,7 @@ inline bool isThreadJoinCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isTDJoin(cs);
 }
-inline bool isThreadJoinCall(const SVFInstruction *inst)
+inline bool isThreadJoinCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isTDJoin(inst);
 }
@@ -528,7 +512,7 @@ inline bool isThreadExitCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isTDExit(cs);
 }
-inline bool isThreadExitCall(const SVFInstruction *inst)
+inline bool isThreadExitCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isTDExit(inst);
 }
@@ -540,7 +524,7 @@ inline bool isLockAquireCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isTDAcquire(cs);
 }
-inline bool isLockAquireCall(const SVFInstruction *inst)
+inline bool isLockAquireCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isTDAcquire(inst);
 }
@@ -552,7 +536,7 @@ inline bool isLockReleaseCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isTDRelease(cs);
 }
-inline bool isLockReleaseCall(const SVFInstruction *inst)
+inline bool isLockReleaseCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isTDRelease(inst);
 }
@@ -564,7 +548,7 @@ inline bool isBarrierWaitCall(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->isTDBarWait(cs);
 }
-inline bool isBarrierWaitCall(const SVFInstruction *inst)
+inline bool isBarrierWaitCall(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->isTDBarWait(inst);
 }
@@ -576,7 +560,7 @@ inline const SVFValue* getActualParmAtForkSite(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->getActualParmAtForkSite(cs);
 }
-inline const SVFValue* getActualParmAtForkSite(const SVFInstruction *inst)
+inline const SVFValue* getActualParmAtForkSite(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->getActualParmAtForkSite(inst);
 }
@@ -588,7 +572,7 @@ inline const SVFValue* getTaskFuncAtHareParForSite(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->getTaskFuncAtHareParForSite(cs);
 }
-inline const SVFValue* getTaskFuncAtHareParForSite(const SVFInstruction *inst)
+inline const SVFValue* getTaskFuncAtHareParForSite(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->getTaskFuncAtHareParForSite(inst);
 }
@@ -600,7 +584,7 @@ inline const SVFValue* getTaskDataAtHareParForSite(const CallSite cs)
 {
     return ThreadAPI::getThreadAPI()->getTaskDataAtHareParForSite(cs);
 }
-inline const SVFValue* getTaskDataAtHareParForSite(const SVFInstruction *inst)
+inline const SVFValue* getTaskDataAtHareParForSite(const SVFInstruction* inst)
 {
     return ThreadAPI::getThreadAPI()->getTaskDataAtHareParForSite(inst);
 }
@@ -611,14 +595,12 @@ inline bool isProgExitCall(const CallSite cs)
     return isProgExitFunction(getCallee(cs));
 }
 
-inline bool isProgExitCall(const SVFInstruction *inst)
+inline bool isProgExitCall(const SVFInstruction* inst)
 {
     return isProgExitFunction(getCallee(inst));
 }
 
-template<typename T>
-constexpr typename std::remove_reference<T>::type &&
-move(T &&t) noexcept
+template <typename T> constexpr typename std::remove_reference<T>::type&& move(T&& t) noexcept
 {
     return std::move(t);
 }
@@ -633,44 +615,59 @@ template <typename... Ts> using void_t = typename make_void<Ts...>::type;
 /// @brief Type trait that checks if a type is iterable
 /// (can be applied on a range-based for loop)
 ///@{
-template <typename T, typename = void> struct is_iterable : std::false_type {};
+template <typename T, typename = void> struct is_iterable : std::false_type
+{
+};
 template <typename T>
-struct is_iterable<T, void_t<decltype(std::begin(std::declval<T&>()) !=
-                                      std::end(std::declval<T&>()))>>
-: std::true_type {};
+struct is_iterable<T, void_t<decltype(std::begin(std::declval<T&>()) != std::end(std::declval<T&>()))>> : std::true_type
+{
+};
 template <typename T> constexpr bool is_iterable_v = is_iterable<T>::value;
 ///@}
 
 /// @brief Type trait to check if a type is a map or unordered_map.
 ///@{
-template <typename T> struct is_map : std::false_type {};
-template <typename... Ts> struct is_map<std::map<Ts...>> : std::true_type {};
-template <typename... Ts>
-struct is_map<std::unordered_map<Ts...>> : std::true_type {};
+template <typename T> struct is_map : std::false_type
+{
+};
+template <typename... Ts> struct is_map<std::map<Ts...>> : std::true_type
+{
+};
+template <typename... Ts> struct is_map<std::unordered_map<Ts...>> : std::true_type
+{
+};
 template <typename... Ts> constexpr bool is_map_v = is_map<Ts...>::value;
 ///@}
 
 /// @brief Type trait to check if a type is a set or unordered_set.
 ///@{
-template <typename T> struct is_set : std::false_type {};
-template <typename... Ts> struct is_set<std::set<Ts...>> : std::true_type {};
-template <typename... Ts>
-struct is_set<std::unordered_set<Ts...>> : std::true_type {};
+template <typename T> struct is_set : std::false_type
+{
+};
+template <typename... Ts> struct is_set<std::set<Ts...>> : std::true_type
+{
+};
+template <typename... Ts> struct is_set<std::unordered_set<Ts...>> : std::true_type
+{
+};
 template <typename... Ts> constexpr bool is_set_v = is_set<Ts...>::value;
 ///@}
 
 /// @brief Type trait to check if a type is vector or list.
-template <typename T> struct is_sequence_container : std::false_type {};
-template <typename... Ts>
-struct is_sequence_container<std::vector<Ts...>> : std::true_type {};
-template <typename... Ts>
-struct is_sequence_container<std::deque<Ts...>> : std::true_type {};
-template <typename... Ts>
-struct is_sequence_container<std::list<Ts...>> : std::true_type {};
-template <typename... Ts>
-constexpr bool is_sequence_container_v = is_sequence_container<Ts...>::value;
+template <typename T> struct is_sequence_container : std::false_type
+{
+};
+template <typename... Ts> struct is_sequence_container<std::vector<Ts...>> : std::true_type
+{
+};
+template <typename... Ts> struct is_sequence_container<std::deque<Ts...>> : std::true_type
+{
+};
+template <typename... Ts> struct is_sequence_container<std::list<Ts...>> : std::true_type
+{
+};
+template <typename... Ts> constexpr bool is_sequence_container_v = is_sequence_container<Ts...>::value;
 ///@}
-
 
 } // End namespace SVFUtil
 

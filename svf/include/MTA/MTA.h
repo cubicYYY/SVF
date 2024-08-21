@@ -66,7 +66,6 @@ public:
     /// Destructor
     virtual ~MTA();
 
-
     /// We start the pass here
     virtual bool runOnModule(SVFIR* module);
     /// Compute MHP
@@ -88,6 +87,7 @@ public:
     {
         return lsa;
     }
+
 private:
     ThreadCallGraph* tcg;
     std::unique_ptr<TCT> tct;

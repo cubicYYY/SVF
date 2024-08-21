@@ -40,16 +40,16 @@ using namespace SVFUtil;
  * Whether two functions may happen in parallel
  */
 
-//static Option<bool> TDPrint(
-//    "print-td",
-//    true,
-//    "Print Thread Analysis Results"
+// static Option<bool> TDPrint(
+//     "print-td",
+//     true,
+//     "Print Thread Analysis Results"
 //);
 
 bool PCG::analyze()
 {
 
-    //callgraph = new PTACallGraph(mod);
+    // callgraph = new PTACallGraph(mod);
 
     DBOUT(DMTA, outs() << pasMsg("Starting MHP analysis\n"));
 
@@ -57,25 +57,22 @@ bool PCG::analyze()
 
     inferFromCallGraph();
 
-    //interferenceAnalysis();
+    // interferenceAnalysis();
 
-    //if (Options::TDPrint()) {
-    //printResults();
-    //tdAPI->performAPIStat(mod);
-    //}
+    // if (Options::TDPrint()) {
+    // printResults();
+    // tdAPI->performAPIStat(mod);
+    // }
     return false;
 }
 
 bool PCG::mayHappenInParallelBetweenFunctions(const SVFFunction* fun1, const SVFFunction* fun2) const
 {
     // if neither of functions are spawnees, then they won't happen in parallel
-    if (isSpawneeFun(fun1) == false && isSpawneeFun(fun2) == false)
-        return false;
+    if (isSpawneeFun(fun1) == false && isSpawneeFun(fun2) == false) return false;
     // if there exit one of the function are not spawner, spawnee or follower, then they won't happen in parallel
-    if (isSpawnerFun(fun1) == false && isSpawneeFun(fun1) == false && isFollowerFun(fun1) == false)
-        return false;
-    if (isSpawnerFun(fun2) == false && isSpawneeFun(fun2) == false && isFollowerFun(fun2) == false)
-        return false;
+    if (isSpawnerFun(fun1) == false && isSpawneeFun(fun1) == false && isFollowerFun(fun1) == false) return false;
+    if (isSpawnerFun(fun2) == false && isSpawneeFun(fun2) == false && isFollowerFun(fun2) == false) return false;
 
     return true;
 }
@@ -86,7 +83,6 @@ bool PCG::mayHappenInParallel(const SVFInstruction* i1, const SVFInstruction* i2
     const SVFFunction* fun2 = i2->getFunction();
     return mayHappenInParallelBetweenFunctions(fun1, fun2);
 }
-
 
 /*!
  * Initialize thread spawners and spawnees from threadAPI functions
@@ -156,8 +152,7 @@ void PCG::collectSpawners()
     {
         const SVFFunction* svffun = worklist.pop();
         PTACallGraphNode* funNode = callgraph->getCallGraphNode(svffun);
-        for (PTACallGraphNode::const_iterator it = funNode->InEdgeBegin(), eit = funNode->InEdgeEnd(); it != eit;
-                ++it)
+        for (PTACallGraphNode::const_iterator it = funNode->InEdgeBegin(), eit = funNode->InEdgeEnd(); it != eit; ++it)
         {
             PTACallGraphEdge* callEdge = (*it);
             const SVFFunction* caller = callEdge->getSrcNode()->getFunction();
@@ -167,13 +162,15 @@ void PCG::collectSpawners()
                 addSpawnerFun(caller);
             }
             /// add all the callsites from callers to callee (spawner) as a spawn site.
-            for (PTACallGraphEdge::CallInstSet::const_iterator dit = callEdge->directCallsBegin(), deit =
-                        callEdge->directCallsEnd(); dit != deit; ++dit)
+            for (PTACallGraphEdge::CallInstSet::const_iterator dit = callEdge->directCallsBegin(),
+                                                               deit = callEdge->directCallsEnd();
+                 dit != deit; ++dit)
             {
                 addSpawnsite((*dit)->getCallSite());
             }
-            for (PTACallGraphEdge::CallInstSet::const_iterator dit = callEdge->indirectCallsBegin(), deit =
-                        callEdge->indirectCallsEnd(); dit != deit; ++dit)
+            for (PTACallGraphEdge::CallInstSet::const_iterator dit = callEdge->indirectCallsBegin(),
+                                                               deit = callEdge->indirectCallsEnd();
+                 dit != deit; ++dit)
             {
                 addSpawnsite((*dit)->getCallSite());
             }
@@ -198,7 +195,7 @@ void PCG::collectSpawnees()
         const SVFFunction* svffun = worklist.pop();
         PTACallGraphNode* funNode = callgraph->getCallGraphNode(svffun);
         for (PTACallGraphNode::const_iterator it = funNode->OutEdgeBegin(), eit = funNode->OutEdgeEnd(); it != eit;
-                ++it)
+             ++it)
         {
             const SVFFunction* caller = (*it)->getDstNode()->getFunction();
             if (isSpawneeFun(caller) == false)
@@ -237,7 +234,8 @@ void PCG::identifyFollowers()
                     if (callgraph->hasCallGraphEdge(cbn))
                     {
                         for (PTACallGraph::CallGraphEdgeSet::const_iterator cgIt = callgraph->getCallEdgeBegin(cbn),
-                                ecgIt = callgraph->getCallEdgeEnd(cbn); cgIt != ecgIt; ++cgIt)
+                                                                            ecgIt = callgraph->getCallEdgeEnd(cbn);
+                             cgIt != ecgIt; ++cgIt)
                         {
                             const PTACallGraphEdge* edge = *cgIt;
                             addFollowerFun(edge->getDstNode()->getFunction());
@@ -255,7 +253,6 @@ void PCG::identifyFollowers()
             }
         }
     }
-
 }
 
 /*!
@@ -279,7 +276,7 @@ void PCG::collectFollowers()
         const SVFFunction* svffun = worklist.pop();
         PTACallGraphNode* funNode = callgraph->getCallGraphNode(svffun);
         for (PTACallGraphNode::const_iterator it = funNode->OutEdgeBegin(), eit = funNode->OutEdgeEnd(); it != eit;
-                ++it)
+             ++it)
         {
             const SVFFunction* caller = (*it)->getDstNode()->getFunction();
             if (isFollowerFun(caller) == false)
@@ -302,14 +299,13 @@ void PCG::collectFollowers()
 void PCG::interferenceAnalysis()
 {
 
-//	DBOUT(DMTA, outs() << pasMsg("Starting Race Detection\n"));
+    //	DBOUT(DMTA, outs() << pasMsg("Starting Race Detection\n"));
 
     PCG::FunVec worklist;
     for (SVFModule::const_iterator F = mod->begin(), E = mod->end(); F != E; ++F)
     {
         const SVFFunction* fun = *F;
-        if (isExtCall(fun))
-            continue;
+        if (isExtCall(fun)) continue;
         worklist.push_back(fun);
     }
 
@@ -353,8 +349,7 @@ void PCG::printTDFuns()
     for (SVFModule::const_iterator fi = mod->begin(), efi = mod->end(); fi != efi; ++fi)
     {
         const SVFFunction* fun = (*fi);
-        if (fun->isDeclaration())
-            continue;
+        if (fun->isDeclaration()) continue;
 
         std::string isSpawner = isSpawnerFun(fun) ? " SPAWNER " : "";
         std::string isSpawnee = isSpawneeFun(fun) ? " CHILDREN " : "";

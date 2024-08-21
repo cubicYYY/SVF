@@ -86,20 +86,17 @@ private:
     }
     inline bool addSpawnerFun(const SVFFunction* fun)
     {
-        if (fun->isDeclaration())
-            return false;
+        if (fun->isDeclaration()) return false;
         return spawners.insert(fun).second;
     }
     inline bool addSpawneeFun(const SVFFunction* fun)
     {
-        if (fun->isDeclaration())
-            return false;
+        if (fun->isDeclaration()) return false;
         return spawnees.insert(fun).second;
     }
     inline bool addFollowerFun(const SVFFunction* fun)
     {
-        if (fun->isDeclaration())
-            return false;
+        if (fun->isDeclaration()) return false;
         return followers.insert(fun).second;
     }
     //@}
@@ -128,12 +125,11 @@ private:
     //@}
 
 public:
-
     /// Constructor
     PCG(PointerAnalysis* an) : pta(an)
     {
         mod = pta->getModule();
-        tdAPI=ThreadAPI::getThreadAPI();
+        tdAPI = ThreadAPI::getThreadAPI();
         callgraph = pta->getPTACallGraph();
     }
 
@@ -141,9 +137,7 @@ public:
     virtual bool analyze();
 
     /// Destructor
-    virtual ~PCG()
-    {
-    }
+    virtual ~PCG() {}
 
     CallICFGNode* getCallICFGNode(const SVFInstruction* inst)
     {

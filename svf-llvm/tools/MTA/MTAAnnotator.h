@@ -20,13 +20,13 @@ namespace SVF
 /*!
  * MTA annotation
  */
-class MTAAnnotator: public Annotator
+class MTAAnnotator : public Annotator
 {
 
 public:
     typedef Set<const Instruction*> InstSet;
     /// Constructor
-    MTAAnnotator(): mhp(nullptr),lsa(nullptr)
+    MTAAnnotator() : mhp(nullptr), lsa(nullptr)
     {
         numOfAllSt = 0;
         numOfAllLd = 0;
@@ -40,10 +40,7 @@ public:
         numOfAnnotatedLd = 0;
     }
     /// Destructor
-    virtual ~MTAAnnotator()
-    {
-
-    }
+    virtual ~MTAAnnotator() {}
     /// Annotation
     //@{
     void annotateDRCheck(Instruction* inst);
@@ -53,7 +50,7 @@ public:
     void initialize(MHP* mhp, LockAnalysis* lsa);
 
     /// Prune candidate instructions that are thread local
-    void pruneThreadLocal(PointerAnalysis*pta);
+    void pruneThreadLocal(PointerAnalysis* pta);
 
     /// Prune candidate instructions that non-mhp and non-alias with others
     void pruneAliasMHP(PointerAnalysis* pta);
@@ -68,12 +65,11 @@ public:
     const Value* getStoreOperand(const Instruction* inst);
     const Value* getLoadOperand(const Instruction* inst);
 
-
     /// Check if Function "F" is memset
     inline bool isMemset(const Instruction* I)
     {
         const SVFInstruction* svfInst = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I);
-        const SVFFunction* F =SVFUtil::getCallee(svfInst);
+        const SVFFunction* F = SVFUtil::getCallee(svfInst);
         return F && F->getName().find("llvm.memset") != std::string::npos;
     }
 
@@ -91,11 +87,9 @@ private:
     InstSet loadset;
     InstSet storeset;
 
-
-//	RCMemoryPartitioning mp;
+    //	RCMemoryPartitioning mp;
 
 public:
-
     u32_t numOfAllSt;
     u32_t numOfAllLd;
     u32_t numOfNonLocalSt;
@@ -109,9 +103,9 @@ public:
 
     /// Constant INTERLEV_FLAG values
     //@{
-    static const u32_t ANNO_MHP= 0x04;
-    static const u32_t ANNO_ALIAS= 0x02;
-    static const u32_t ANNO_LOCAL= 0x01;
+    static const u32_t ANNO_MHP = 0x04;
+    static const u32_t ANNO_ALIAS = 0x02;
+    static const u32_t ANNO_LOCAL = 0x01;
     //@}
 };
 

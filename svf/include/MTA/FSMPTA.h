@@ -34,7 +34,6 @@
 #ifndef FSPTANALYSIS_H_
 #define FSPTANALYSIS_H_
 
-
 #include "WPA/FlowSensitive.h"
 #include "MSSA/SVFGBuilder.h"
 #include "MTA/LockAnalysis.h"
@@ -47,34 +46,34 @@ namespace SVF
 class MHP;
 class LockAnalysis;
 
-
 class SVFGNodeLockSpan
 {
 public:
-    SVFGNodeLockSpan(const StmtSVFGNode* SVFGnode, LockAnalysis::LockSpan lockspan) :
-        SVFGNode(SVFGnode), lockSpan(lockspan) {}
+    SVFGNodeLockSpan(const StmtSVFGNode* SVFGnode, LockAnalysis::LockSpan lockspan)
+        : SVFGNode(SVFGnode), lockSpan(lockspan)
+    {
+    }
     virtual ~SVFGNodeLockSpan() {}
 
-    inline bool operator< (const SVFGNodeLockSpan& rhs) const
+    inline bool operator<(const SVFGNodeLockSpan& rhs) const
     {
-        if (SVFGNode != rhs.getSVFGNode())
-            return SVFGNode < rhs.getSVFGNode();
+        if (SVFGNode != rhs.getSVFGNode()) return SVFGNode < rhs.getSVFGNode();
         return lockSpan.size() < rhs.getLockSpan().size();
     }
-    inline SVFGNodeLockSpan& operator= (const SVFGNodeLockSpan& rhs)
+    inline SVFGNodeLockSpan& operator=(const SVFGNodeLockSpan& rhs)
     {
-        if(*this != rhs)
+        if (*this != rhs)
         {
             SVFGNode = rhs.getSVFGNode();
             lockSpan = rhs.getLockSpan();
         }
         return *this;
     }
-    inline bool operator== (const SVFGNodeLockSpan& rhs) const
+    inline bool operator==(const SVFGNodeLockSpan& rhs) const
     {
         return (SVFGNode == rhs.getSVFGNode() && lockSpan == rhs.getLockSpan());
     }
-    inline bool operator!= (const SVFGNodeLockSpan& rhs) const
+    inline bool operator!=(const SVFGNodeLockSpan& rhs) const
     {
         return !(*this == rhs);
     }
@@ -86,6 +85,7 @@ public:
     {
         return lockSpan;
     }
+
 private:
     const StmtSVFGNode* SVFGNode;
     LockAnalysis::LockSpan lockSpan;
@@ -105,13 +105,11 @@ public:
     typedef std::vector<const SVFGNode*> SVFGNodeVec;
     typedef NodeBS SVFGNodeIDSet;
     typedef Set<const SVFInstruction*> InstSet;
-    typedef std::pair<NodeID,NodeID> NodeIDPair;
+    typedef std::pair<NodeID, NodeID> NodeIDPair;
     typedef Map<SVFGNodeLockSpan, bool> PairToBoolMap;
 
     /// Constructor
-    MTASVFGBuilder(MHP* m, LockAnalysis* la) : SVFGBuilder(), mhp(m), lockana(la)
-    {
-    }
+    MTASVFGBuilder(MHP* m, LockAnalysis* la) : SVFGBuilder(), mhp(m), lockana(la) {}
 
     /// Destructor
     virtual ~MTASVFGBuilder() {}
@@ -137,14 +135,14 @@ private:
     /// Connect MHP indirect value-flow edges for two nodes that may-happen-in-parallel
     void connectMHPEdges(PointerAnalysis* pta);
 
-    void handleStoreLoadNonSparse(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta);
-    void handleStoreStoreNonSparse(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta);
+    void handleStoreLoadNonSparse(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta);
+    void handleStoreStoreNonSparse(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta);
 
-    void handleStoreLoad(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta);
-    void handleStoreStore(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta);
+    void handleStoreLoad(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta);
+    void handleStoreStore(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta);
 
-    void handleStoreLoadWithLockPrecisely(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta);
-    void handleStoreStoreWithLockPrecisely(const StmtSVFGNode* n1,const StmtSVFGNode* n2, PointerAnalysis* pta);
+    void handleStoreLoadWithLockPrecisely(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta);
+    void handleStoreStoreWithLockPrecisely(const StmtSVFGNode* n1, const StmtSVFGNode* n2, PointerAnalysis* pta);
 
     void mergeSpan(NodeBS comlocks, InstSet& res);
     void readPrecision();
@@ -173,7 +171,6 @@ private:
     Set<NodeIDPair> recordedges;
     Map<NodeIDPair, PointsTo> edge2pts;
 
-
     Map<const StmtSVFGNode*, SVFGNodeIDSet> prevset;
     Map<const StmtSVFGNode*, SVFGNodeIDSet> succset;
 
@@ -183,18 +180,15 @@ private:
     PairToBoolMap pairheadmap;
     PairToBoolMap pairtailmap;
 
-
-    static const u32_t ADDEDGE_NOEDGE= 0;
-    static const u32_t ADDEDGE_NONSPARSE= 1;
-    static const u32_t ADDEDGE_ALLOPT= 2;
-    static const u32_t ADDEDGE_NOMHP= 3;
-    static const u32_t ADDEDGE_NOALIAS= 4;
-    static const u32_t ADDEDGE_NOLOCK= 5;
-    static const u32_t ADDEDGE_NORP= 6;
-//    static const u32_t ADDEDGE_PRECISELOCK= 5;
-
+    static const u32_t ADDEDGE_NOEDGE = 0;
+    static const u32_t ADDEDGE_NONSPARSE = 1;
+    static const u32_t ADDEDGE_ALLOPT = 2;
+    static const u32_t ADDEDGE_NOMHP = 3;
+    static const u32_t ADDEDGE_NOALIAS = 4;
+    static const u32_t ADDEDGE_NOLOCK = 5;
+    static const u32_t ADDEDGE_NORP = 6;
+    //    static const u32_t ADDEDGE_PRECISELOCK= 5;
 };
-
 
 /*!
  * Flow-sensitive pointer analysis for multithreaded programs
@@ -202,18 +196,12 @@ private:
 class FSMPTA : public FlowSensitive
 {
 
-
 public:
-
     /// Constructor
-    FSMPTA(MHP* m, LockAnalysis* la) : FlowSensitive(m->getTCT()->getPTA()->getPAG()), mhp(m), lockana(la)
-    {
-    }
+    FSMPTA(MHP* m, LockAnalysis* la) : FlowSensitive(m->getTCT()->getPTA()->getPAG()), mhp(m), lockana(la) {}
 
     /// Destructor
-    ~FSMPTA()
-    {
-    }
+    ~FSMPTA() {}
 
     /// Initialize analysis
     void initialize(SVFModule* module);
@@ -228,7 +216,7 @@ public:
     {
         if (mfspta == nullptr)
         {
-            mfspta = new FSMPTA(m,la);
+            mfspta = new FSMPTA(m, la);
             mfspta->analyze();
         }
         return mfspta;
@@ -237,8 +225,7 @@ public:
     /// Release flow-sensitive pointer analysis
     static void releaseFSMPTA()
     {
-        if (mfspta)
-            delete mfspta;
+        if (mfspta) delete mfspta;
         mfspta = nullptr;
     }
 
@@ -259,10 +246,10 @@ private:
 
 template <> struct std::hash<SVF::SVFGNodeLockSpan>
 {
-    size_t operator()(const SVF::SVFGNodeLockSpan &cs) const
+    size_t operator()(const SVF::SVFGNodeLockSpan& cs) const
     {
-        std::hash<SVF::StmtSVFGNode* >h;
-        SVF::StmtSVFGNode* node = const_cast<SVF::StmtSVFGNode* > (cs.getSVFGNode());
+        std::hash<SVF::StmtSVFGNode*> h;
+        SVF::StmtSVFGNode* node = const_cast<SVF::StmtSVFGNode*>(cs.getSVFGNode());
         return h(node);
     }
 };

@@ -23,17 +23,14 @@ class MTAResultValidator
 
 public:
     typedef int INTERLEV_FLAG;
-    MTAResultValidator(MHP* mh) :
-        mhp(mh)
+    MTAResultValidator(MHP* mh) : mhp(mh)
     {
         tcg = mhp->getThreadCallGraph();
         tdAPI = tcg->getThreadAPI();
         mod = mhp->getTCT()->getSVFModule();
     }
     // Destructor
-    ~MTAResultValidator()
-    {
-    }
+    ~MTAResultValidator() {}
 
     // Analysis
     void analyze();
@@ -41,15 +38,15 @@ public:
     {
         return mod;
     }
-protected:
 
+protected:
     /*
      * Assistant functions
      */
 
     // Split string
-    std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
-    std::vector<std::string> split(const std::string &s, char delim);
+    std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems);
+    std::vector<std::string> split(const std::string& s, char delim);
 
     // Get special arguments of given call sites
     NodeID getIntArg(const Instruction* inst, unsigned int arg_num);
@@ -71,8 +68,8 @@ protected:
     void dumpInterlev(NodeBS& lev);
 
     // Get the validation result string of a single validation scenario.
-    inline std::string getOutput(const char *scenario, bool analysisRes);
-    inline std::string getOutputforInterlevAnalysis(const char *scenario, INTERLEV_FLAG analysisRes);
+    inline std::string getOutput(const char* scenario, bool analysisRes);
+    inline std::string getOutputforInterlevAnalysis(const char* scenario, INTERLEV_FLAG analysisRes);
 
     /*
      * Collect the callsite targets for validations.
@@ -116,7 +113,6 @@ protected:
     INTERLEV_FLAG validateInterleaving();
 
 private:
-
     typedef Map<NodeID, const SVFInstruction*> csnumToInst;
     typedef Map<NodeID, CallStrCxt> vthdToCxtMap;
     typedef Map<NodeID, NodeID> vthdTorthdMap;
@@ -124,12 +120,12 @@ private:
 
     typedef Map<NodeID, Set<NodeID>> rthdToChildrenMap;
 
-    MHP::InstToThreadStmtSetMap instToTSMap; // Map a instruction to CxtThreadStmtSet
+    MHP::InstToThreadStmtSetMap instToTSMap;                   // Map a instruction to CxtThreadStmtSet
     MHP::ThreadStmtToThreadInterleav threadStmtToInterLeaving; /// Map a statement to its thread interleavings
 
-    static constexpr char const *CXT_THREAD = "CXT_THREAD";
-    static constexpr char const *INTERLEV_ACCESS = "INTERLEV_ACCESS";
-    static constexpr char const *TCT_ACCESS = "TCT_ACCESS";
+    static constexpr char const* CXT_THREAD = "CXT_THREAD";
+    static constexpr char const* INTERLEV_ACCESS = "INTERLEV_ACCESS";
+    static constexpr char const* TCT_ACCESS = "TCT_ACCESS";
 
     ThreadAPI* tdAPI;
     ThreadCallGraph* tcg;
@@ -137,7 +133,7 @@ private:
     vthdToCxtMap vthdToCxt;
     vthdTorthdMap vthdTorthd;
     rthdTovthdMap rthdTovthd;
-    csnumToInst	csnumToInstMap;
+    csnumToInst csnumToInstMap;
     rthdToChildrenMap rthdToChildren;
     SVFModule* mod;
     /// Constant INTERLEV_FLAG values
@@ -147,8 +143,6 @@ private:
     static const INTERLEV_FLAG INTERLEV_UNSOUND = 0x04;
     //@}
 };
-
-
 
 /*!
  * \brief Validate the result of concurrent analysis.
@@ -177,11 +171,7 @@ public:
     {
     public:
         /// Constructor
-        AccessPair(const Instruction* I1, const Instruction* I2,
-                   const RC_FLAG flags) :
-            I1(I1), I2(I2), flags(flags)
-        {
-        }
+        AccessPair(const Instruction* I1, const Instruction* I2, const RC_FLAG flags) : I1(I1), I2(I2), flags(flags) {}
 
         /// Class member access
         //@{
@@ -226,9 +216,7 @@ public:
     }
 
     /// Release resource
-    void release()
-    {
-    }
+    void release() {}
 
     /// Check if the input program has validation target
     inline bool hasValidationTarget() const
@@ -240,26 +228,22 @@ protected:
     /// Interface to the specific validation properties.
     /// Override one or more to implement your own analysis.
     //@{
-    virtual bool mayAccessAliases(const Instruction* I1,
-                                  const Instruction* I2)
+    virtual bool mayAccessAliases(const Instruction* I1, const Instruction* I2)
     {
         selectedValidationScenarios &= ~RC_ALIASES;
         return true;
     }
-    virtual bool mayHappenInParallel(const Instruction* I1,
-                                     const Instruction* I2)
+    virtual bool mayHappenInParallel(const Instruction* I1, const Instruction* I2)
     {
         selectedValidationScenarios &= ~RC_MHP;
         return true;
     }
-    virtual bool protectedByCommonLocks(const Instruction* I1,
-                                        const Instruction* I2)
+    virtual bool protectedByCommonLocks(const Instruction* I1, const Instruction* I2)
     {
         selectedValidationScenarios &= ~RC_PROTECTED;
         return true;
     }
-    virtual bool mayHaveDataRace(const Instruction* I1,
-                                 const Instruction* I2)
+    virtual bool mayHaveDataRace(const Instruction* I1, const Instruction* I2)
     {
         selectedValidationScenarios &= ~RC_RACE;
         return true;
@@ -276,26 +260,25 @@ protected:
         // Collect call sites of all RC_ACCESS function calls.
         std::vector<const CallBase*> csInsts;
         const Function* F = nullptr;
-        for (Module &M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
+        for (Module& M : LLVMModuleSet::getLLVMModuleSet()->getLLVMModules())
         {
-            for(auto it = M.begin(); it != M.end(); it++)
+            for (auto it = M.begin(); it != M.end(); it++)
             {
                 const std::string fName = (*it).getName().str();
-                if(fName.find(RC_ACCESS) != std::string::npos)
+                if (fName.find(RC_ACCESS) != std::string::npos)
                 {
                     F = &(*it);
                     break;
                 }
             }
         }
-        if (!F)     return;
+        if (!F) return;
 
-        for (Value::const_use_iterator it = F->use_begin(), ie =
-                    F->use_end(); it != ie; ++it)
+        for (Value::const_use_iterator it = F->use_begin(), ie = F->use_end(); it != ie; ++it)
         {
-            const Use *u = &*it;
-            const Value *user = u->getUser();
-            if(LLVMUtil::isCallSite(user))
+            const Use* u = &*it;
+            const Value* user = u->getUser();
+            if (LLVMUtil::isCallSite(user))
             {
                 const CallBase* csInst = LLVMUtil::getLLVMCallSite(user);
                 csInsts.push_back(csInst);
@@ -329,7 +312,7 @@ protected:
         // Iterate every memory access pair to perform the validation.
         for (int i = 0, e = accessPairs.size(); i != e; ++i)
         {
-            const AccessPair &ap = accessPairs[i];
+            const AccessPair& ap = accessPairs[i];
             const Instruction* I1 = ap.getInstruction1();
             const Instruction* I2 = ap.getInstruction2();
 
@@ -343,26 +326,19 @@ protected:
                             << LLVMModuleSet::getLLVMModuleSet()->getSVFValue(I2)->getSourceLoc() << ")\n";
             if (selectedValidationScenarios & RC_ALIASES)
             {
-                SVFUtil::outs() << "\t"
-                                << getOutput("ALIASES", alias, ap.isFlaged(RC_ALIASES))
-                                << "\n";
+                SVFUtil::outs() << "\t" << getOutput("ALIASES", alias, ap.isFlaged(RC_ALIASES)) << "\n";
             }
             if (selectedValidationScenarios & RC_MHP)
             {
-                SVFUtil::outs() << "\t"
-                                << getOutput("MHP", mhp, ap.isFlaged(RC_MHP)) << "\n";
+                SVFUtil::outs() << "\t" << getOutput("MHP", mhp, ap.isFlaged(RC_MHP)) << "\n";
             }
             if (selectedValidationScenarios & RC_PROTECTED)
             {
-                SVFUtil::outs() << "\t"
-                                << getOutput("PROTECT", protect,
-                                             ap.isFlaged(RC_PROTECTED)) << "\n";
+                SVFUtil::outs() << "\t" << getOutput("PROTECT", protect, ap.isFlaged(RC_PROTECTED)) << "\n";
             }
             if (selectedValidationScenarios & RC_RACE)
             {
-                SVFUtil::outs() << "\t"
-                                << getOutput("RACE", racy, ap.isFlaged(RC_RACE))
-                                << "\n";
+                SVFUtil::outs() << "\t" << getOutput("RACE", racy, ap.isFlaged(RC_RACE)) << "\n";
             }
         }
 
@@ -370,17 +346,14 @@ protected:
     }
 
     /// Get the validation result string of a single validation scenario.
-    inline std::string getOutput(const char *scenario,
-                                 bool analysisRes, bool expectedRes)
+    inline std::string getOutput(const char* scenario, bool analysisRes, bool expectedRes)
     {
         std::string ret(scenario);
         ret += "\t";
-        if (expectedRes)
-            ret += " T: ";
+        if (expectedRes) ret += " T: ";
         else
             ret += " F: ";
-        if (analysisRes == expectedRes)
-            ret += SVFUtil::sucMsg("SUCCESS");
+        if (analysisRes == expectedRes) ret += SVFUtil::sucMsg("SUCCESS");
         else
             ret += SVFUtil::errMsg("FAILURE");
         return ret;
@@ -397,8 +370,8 @@ private:
      */
     static bool compare(const CallBase* CI1, const CallBase* CI2)
     {
-        const Value *V1 = CI1->getArgOperand(0);
-        const Value *V2 = CI2->getArgOperand(0);
+        const Value* V1 = CI1->getArgOperand(0);
+        const Value* V2 = CI2->getArgOperand(0);
         const ConstantInt* C1 = SVFUtil::dyn_cast<ConstantInt>(V1);
         const ConstantInt* C2 = SVFUtil::dyn_cast<ConstantInt>(V2);
         assert(0 != C1 && 0 != C2);
@@ -410,22 +383,18 @@ private:
      * same BasicBlock.
      * Return nullptr if none exists.
      */
-    const Instruction* getPreviousMemoryAccessInst(
-        const Instruction* I)
+    const Instruction* getPreviousMemoryAccessInst(const Instruction* I)
     {
         I = I->getPrevNode();
         while (I)
         {
-            if (SVFUtil::isa<LoadInst, StoreInst>(I))
-                return I;
+            if (SVFUtil::isa<LoadInst, StoreInst>(I)) return I;
 
             const SVFInstruction* inst = LLVMModuleSet::getLLVMModuleSet()->getSVFInstruction(I);
 
-            if (const SVFFunction *callee = SVFUtil::getCallee(inst))
+            if (const SVFFunction* callee = SVFUtil::getCallee(inst))
             {
-                if (callee->getName().find("llvm.memset") != std::string::npos)
-                    return I;
-
+                if (callee->getName().find("llvm.memset") != std::string::npos) return I;
             }
             I = I->getPrevNode();
         }
@@ -442,7 +411,7 @@ private:
 
     /// The name of the function which is used to specify the ground truth
     /// of the validation properties in the target program.
-    static constexpr char const *RC_ACCESS = "RC_ACCESS";
+    static constexpr char const* RC_ACCESS = "RC_ACCESS";
 };
-}	// namespace SVF end
+} // namespace SVF
 #endif /* MTARESULTVALIDATOR_H_ */

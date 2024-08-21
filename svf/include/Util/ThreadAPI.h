@@ -46,17 +46,17 @@ class ThreadAPI
 public:
     enum TD_TYPE
     {
-        TD_DUMMY = 0,   /// dummy type
-        TD_FORK,        /// create a new thread
-        TD_JOIN,        /// wait for a thread to join
-        TD_DETACH,      /// detach a thread directly instead wait for it to join
-        TD_ACQUIRE,     /// acquire a lock
-        TD_TRY_ACQUIRE, /// try to acquire a lock
-        TD_RELEASE,     /// release a lock
-        TD_EXIT,        /// exit/kill a thread
-        TD_CANCEL,      /// cancel a thread by another
-        TD_COND_WAIT,   /// wait a condition
-        TD_COND_SIGNAL, /// signal a condition
+        TD_DUMMY = 0,       /// dummy type
+        TD_FORK,            /// create a new thread
+        TD_JOIN,            /// wait for a thread to join
+        TD_DETACH,          /// detach a thread directly instead wait for it to join
+        TD_ACQUIRE,         /// acquire a lock
+        TD_TRY_ACQUIRE,     /// try to acquire a lock
+        TD_RELEASE,         /// release a lock
+        TD_EXIT,            /// exit/kill a thread
+        TD_CANCEL,          /// cancel a thread by another
+        TD_COND_WAIT,       /// wait a condition
+        TD_COND_SIGNAL,     /// signal a condition
         TD_COND_BROADCAST,  /// broadcast a condition
         TD_MUTEX_INI,       /// initial a mutex variable
         TD_MUTEX_DESTROY,   /// initial a mutex variable
@@ -74,7 +74,7 @@ private:
     TDAPIMap tdAPIMap;
 
     /// Constructor
-    ThreadAPI ()
+    ThreadAPI()
     {
         init();
     }
@@ -88,11 +88,10 @@ private:
     /// Get the function type if it is a threadAPI function
     inline TD_TYPE getType(const SVFFunction* F) const
     {
-        if(F)
+        if (F)
         {
-            TDAPIMap::const_iterator it= tdAPIMap.find(F->getName());
-            if(it != tdAPIMap.end())
-                return it->second;
+            TDAPIMap::const_iterator it = tdAPIMap.find(F->getName());
+            if (it != tdAPIMap.end()) return it->second;
         }
         return TD_DUMMY;
     }
@@ -101,7 +100,7 @@ public:
     /// Return a static reference
     static ThreadAPI* getThreadAPI()
     {
-        if(tdAPI == nullptr)
+        if (tdAPI == nullptr)
         {
             tdAPI = new ThreadAPI();
         }
@@ -110,7 +109,7 @@ public:
 
     static void destroy()
     {
-        if(tdAPI != nullptr)
+        if (tdAPI != nullptr)
         {
             delete tdAPI;
             tdAPI = nullptr;
@@ -119,14 +118,14 @@ public:
 
     /// Return the callee/callsite/func
     //@{
-    const SVFFunction* getCallee(const SVFInstruction *inst) const;
+    const SVFFunction* getCallee(const SVFInstruction* inst) const;
     const SVFFunction* getCallee(const CallSite cs) const;
-    const CallSite getSVFCallSite(const SVFInstruction *inst) const;
+    const CallSite getSVFCallSite(const SVFInstruction* inst) const;
     //@}
 
     /// Return true if this call create a new thread
     //@{
-    inline bool isTDFork(const SVFInstruction *inst) const
+    inline bool isTDFork(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == TD_FORK;
     }
@@ -138,7 +137,7 @@ public:
 
     /// Return true if this call proceeds a hare_parallel_for
     //@{
-    inline bool isHareParFor(const SVFInstruction *inst) const
+    inline bool isHareParFor(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == HARE_PAR_FOR;
     }
@@ -152,7 +151,7 @@ public:
     //@{
     /// Return the first argument of the call,
     /// Note that, it is the pthread_t pointer
-    inline const SVFValue* getForkedThread(const SVFInstruction *inst) const
+    inline const SVFValue* getForkedThread(const SVFInstruction* inst) const
     {
         assert(isTDFork(inst) && "not a thread fork function!");
         CallSite cs = getSVFCallSite(inst);
@@ -165,7 +164,7 @@ public:
 
     /// Return the third argument of the call,
     /// Note that, it could be function type or a void* pointer
-    inline const SVFValue* getForkedFun(const SVFInstruction *inst) const
+    inline const SVFValue* getForkedFun(const SVFInstruction* inst) const
     {
         assert(isTDFork(inst) && "not a thread fork function!");
         CallSite cs = getSVFCallSite(inst);
@@ -178,7 +177,7 @@ public:
 
     /// Return the forth argument of the call,
     /// Note that, it is the sole argument of start routine ( a void* pointer )
-    inline const SVFValue* getActualParmAtForkSite(const SVFInstruction *inst) const
+    inline const SVFValue* getActualParmAtForkSite(const SVFInstruction* inst) const
     {
         assert(isTDFork(inst) && "not a thread fork function!");
         CallSite cs = getSVFCallSite(inst);
@@ -192,7 +191,7 @@ public:
 
     /// Get the task function (i.e., the 5th parameter) of the hare_parallel_for call
     //@{
-    inline const SVFValue* getTaskFuncAtHareParForSite(const SVFInstruction *inst) const
+    inline const SVFValue* getTaskFuncAtHareParForSite(const SVFInstruction* inst) const
     {
         assert(isHareParFor(inst) && "not a hare_parallel_for function!");
         CallSite cs = getSVFCallSite(inst);
@@ -206,7 +205,7 @@ public:
 
     /// Get the task data (i.e., the 6th parameter) of the hare_parallel_for call
     //@{
-    inline const SVFValue* getTaskDataAtHareParForSite(const SVFInstruction *inst) const
+    inline const SVFValue* getTaskDataAtHareParForSite(const SVFInstruction* inst) const
     {
         assert(isHareParFor(inst) && "not a hare_parallel_for function!");
         CallSite cs = getSVFCallSite(inst);
@@ -220,7 +219,7 @@ public:
 
     /// Return true if this call wait for a worker thread
     //@{
-    inline bool isTDJoin(const SVFInstruction *inst) const
+    inline bool isTDJoin(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == TD_JOIN;
     }
@@ -234,14 +233,14 @@ public:
     //@{
     /// Return the first argument of the call,
     /// Note that, it is the pthread_t pointer
-    const SVFValue* getJoinedThread(const SVFInstruction *inst) const;
+    const SVFValue* getJoinedThread(const SVFInstruction* inst) const;
     inline const SVFValue* getJoinedThread(CallSite cs) const
     {
         return getJoinedThread(cs.getInstruction());
     }
     /// Return the send argument of the call,
     /// Note that, it is the pthread_t pointer
-    inline const SVFValue* getRetParmAtJoinedSite(const SVFInstruction *inst) const
+    inline const SVFValue* getRetParmAtJoinedSite(const SVFInstruction* inst) const
     {
         assert(isTDJoin(inst) && "not a thread join function!");
         CallSite cs = getSVFCallSite(inst);
@@ -253,10 +252,9 @@ public:
     }
     //@}
 
-
     /// Return true if this call exits/terminate a thread
     //@{
-    inline bool isTDExit(const SVFInstruction *inst) const
+    inline bool isTDExit(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == TD_EXIT;
     }
@@ -269,7 +267,7 @@ public:
 
     /// Return true if this call acquire a lock
     //@{
-    inline bool isTDAcquire(const SVFInstruction *inst) const
+    inline bool isTDAcquire(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == TD_ACQUIRE;
     }
@@ -282,7 +280,7 @@ public:
 
     /// Return true if this call release a lock
     //@{
-    inline bool isTDRelease(const SVFInstruction *inst) const
+    inline bool isTDRelease(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == TD_RELEASE;
     }
@@ -296,7 +294,7 @@ public:
     /// Return lock value
     //@{
     /// First argument of pthread_mutex_lock/pthread_mutex_unlock
-    inline const SVFValue* getLockVal(const SVFInstruction *inst) const
+    inline const SVFValue* getLockVal(const SVFInstruction* inst) const
     {
         assert((isTDAcquire(inst) || isTDRelease(inst)) && "not a lock acquire or release function");
         CallSite cs = getSVFCallSite(inst);
@@ -310,7 +308,7 @@ public:
 
     /// Return true if this call waits for a barrier
     //@{
-    inline bool isTDBarWait(const SVFInstruction *inst) const
+    inline bool isTDBarWait(const SVFInstruction* inst) const
     {
         return getType(getCallee(inst)) == TD_BAR_WAIT;
     }

@@ -4,8 +4,6 @@
  *  Created on: 24/07/2021
  */
 
-
-
 #ifndef LOCKRESULTVALIDATOR_H_
 #define LOCKRESULTVALIDATOR_H_
 
@@ -37,13 +35,14 @@ public:
     {
         return _mod;
     }
+
 private:
     // Get CallICFGNode
     inline CallICFGNode* getCBN(const SVFInstruction* inst)
     {
         return _la->getTCT()->getCallICFGNode(inst);
     }
-    const Instruction* getPreviousMemoryAccessInst( const Instruction* I);
+    const Instruction* getPreviousMemoryAccessInst(const Instruction* I);
 
     inline bool inFilter(const std::string& name)
     {
@@ -55,8 +54,8 @@ private:
         return LS.find(lockName) != LS.end();
     }
 
-    Set<std::string> &split(const std::string &s, char delim, Set<std::string> &elems);
-    Set<std::string> split(const std::string &s, char delim);
+    Set<std::string>& split(const std::string& s, char delim, Set<std::string>& elems);
+    Set<std::string> split(const std::string& s, char delim);
 
     std::string getOutput(const char* scenario, LOCK_FLAG analysisRes);
 
@@ -76,9 +75,9 @@ private:
     static const LOCK_FLAG LOCK_IMPRECISE = 0x02;
     static const LOCK_FLAG LOCK_UNSOUND = 0x04;
 
-    static constexpr char const *LOCK = "LOCK";
+    static constexpr char const* LOCK = "LOCK";
 
     Set<std::string> filterFun = {"LOCK", "INTERLEV_ACCESS", "PAUSE", "CXT_THREAD", "TCT_ACCESS"};
 };
-}	// End namespace SVF
+} // End namespace SVF
 #endif /* LOCKRESULTVALIDATOR_H_ */

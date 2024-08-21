@@ -20,7 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 /*
  * CallGraphBuilder.cpp
  *
@@ -52,10 +51,10 @@ PTACallGraph* CallGraphBuilder::buildCallGraph(SVFModule* svfModule)
             {
                 if (SVFUtil::isNonInstricCallSite(inst))
                 {
-                    if(const SVFFunction* callee = getCallee(inst))
+                    if (const SVFFunction* callee = getCallee(inst))
                     {
                         const CallICFGNode* callBlockNode = icfg->getCallICFGNode(inst);
-                        callgraph->addDirectCallGraphEdge(callBlockNode,*F,callee);
+                        callgraph->addDirectCallGraphEdge(callBlockNode, *F, callee);
                     }
                 }
             }
@@ -92,14 +91,15 @@ PTACallGraph* ThreadCallGraphBuilder::buildThreadCallGraph(SVFModule* svfModule)
                     // indirect call to the start routine function
                     else
                     {
-                        cg->addThreadForkEdgeSetMap(cs,nullptr);
+                        cg->addThreadForkEdgeSetMap(cs, nullptr);
                     }
                 }
                 else if (tdAPI->isHareParFor(inst))
                 {
                     const CallICFGNode* cs = icfg->getCallICFGNode(inst);
                     cg->addParForSite(cs);
-                    const SVFFunction* taskFunc = SVFUtil::dyn_cast<SVFFunction>(tdAPI->getTaskFuncAtHareParForSite(inst));
+                    const SVFFunction* taskFunc =
+                        SVFUtil::dyn_cast<SVFFunction>(tdAPI->getTaskFuncAtHareParForSite(inst));
                     if (taskFunc)
                     {
                         cg->addDirectParForEdge(cs);
@@ -107,7 +107,7 @@ PTACallGraph* ThreadCallGraphBuilder::buildThreadCallGraph(SVFModule* svfModule)
                     // indirect call to the start routine function
                     else
                     {
-                        cg->addHareParForEdgeSetMap(cs,nullptr);
+                        cg->addHareParForEdgeSetMap(cs, nullptr);
                     }
                 }
             }
@@ -131,7 +131,3 @@ PTACallGraph* ThreadCallGraphBuilder::buildThreadCallGraph(SVFModule* svfModule)
 
     return cg;
 }
-
-
-
-
