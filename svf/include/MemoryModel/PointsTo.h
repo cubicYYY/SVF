@@ -18,10 +18,11 @@
 #include "Util/BitVector.h"
 #include "Util/CoreBitVector.h"
 #include "Util/SparseBitVector.h"
+#include "Util/RoaringBitmap.h"
 
-// These `PT_*` macro definitions help to perform operations on the underlying `PointsTo` data structure, 
+// These `PT_*` macro definitions help to perform operations on the underlying `PointsTo` data structure,
 // without having to care about exactly what kind of data structure it is.
-// It is essentially template substitution. 
+// It is essentially template substitution.
 //
 // Available data structures with different types must be registered in these places:
 // - The `PT_DO` macro below.
@@ -38,11 +39,10 @@
 /// `pt_name`: The lowercase name of the corresponding member defined in `PointsTo`. For example, `sbv`.
 /// `ptItName`: The iterator name defined in `PointsToIterator`. For example, `sbvIt`.
 /// `operation`: A macro to do the real work with names replaced.
-#define PT_TYPE_CASE(PT_ENUM_NAME, PtClassName, pt_name, ptItName, operation) \
-    case PT_ENUM_NAME: { \
-        operation(PT_ENUM_NAME, PtClassName, pt_name, ptItName) \
-        break; \
-    }
+#define PT_TYPE_CASE(PT_ENUM_NAME, PtClassName, pt_name, ptItName, operation)                                          \
+case PT_ENUM_NAME: {                                                                                                   \
+    operation(PT_ENUM_NAME, PtClassName, pt_name, ptItName) break;                                                     \
+}
 
 /// Performs a custom operation on the `PointsTo` data structure.
 /// It uses `type` to check the real type of the underlying data structure,
@@ -60,17 +60,20 @@
 /// `operation`: A macro or lambda function that defines the operation to be performed.
 ///
 /// TODO: Automatically insert the current function name into the assertion message
-#define PT_DO(type, assert_msg, operation) \
-do { \
-    switch(type) { \
-        /* Underlying Data Structure Registrations: */\
-        PT_TYPE_CASE(PointsTo::Type::SBV, SparseBitVector<>, sbv, sbvIt, operation) \
-        PT_TYPE_CASE(PointsTo::Type::CBV, CoreBitVector, cbv, cbvIt, operation) \
-        PT_TYPE_CASE(PointsTo::Type::BV, BitVector, bv, bvIt, operation) \
-        default: \
-            assert(false && (assert_msg)); \
-    }\
-} while(0)
+#define PT_DO(type, assert_msg, operation)                                                                             \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        switch (type)                                                                                                  \
+        {                                                                                                              \
+            /* Underlying Data Structure Registrations: */                                                             \
+            PT_TYPE_CASE(PointsTo::Type::RBM, RoaringBitmap, rbm, rbmIt, operation)                                    \
+            PT_TYPE_CASE(PointsTo::Type::SBV, SparseBitVector<>, sbv, sbvIt, operation)                                \
+            PT_TYPE_CASE(PointsTo::Type::CBV, CoreBitVector, cbv, cbvIt, operation)                                    \
+            PT_TYPE_CASE(PointsTo::Type::BV, BitVector, bv, bvIt, operation)                                           \
+        default:                                                                                                       \
+            assert(false && (assert_msg));                                                                             \
+        }                                                                                                              \
+    } while (0)
 
 namespace SVF
 {
@@ -86,6 +89,7 @@ public:
         SBV,
         CBV,
         BV,
+        RBM,
     };
 
     class PointsToIterator;
@@ -220,6 +224,8 @@ private:
         CoreBitVector cbv;
         /// Bit vector backing.
         BitVector bv;
+        /// CRoaring wrapper.
+        RoaringBitmap rbm;
     };
 
     /// Type of this points-to set.
@@ -278,6 +284,7 @@ public:
             SparseBitVector<>::iterator sbvIt;
             CoreBitVector::iterator cbvIt;
             BitVector::iterator bvIt;
+            RoaringBitmap::iterator rbmIt;
         };
     };
 };

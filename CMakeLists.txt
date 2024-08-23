@@ -29,6 +29,12 @@ set(SVF_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
 set(SVF_INSTALL_EXTAPI_DIR ${SVF_INSTALL_LIB_DIR})
 set(SVF_INSTALL_EXTAPI_FILE ${SVF_INSTALL_EXTAPI_DIR}/extapi.bc)
 
+# Third-parties
+set(CROARING_INCLUDES ${PROJECT_SOURCE_DIR}/CRoaring)
+include_directories(SYSTEM ${CROARING_INCLUDES})
+message(STATUS "Third-party configuration:
+  CRoaring:                                     ${CROARING_INCLUDES}")
+
 message(STATUS "Building ${PROJECT_NAME} with configuration:
   SVF version:                                  ${SVF_VERSION}
   SVF root directory:                           ${SVF_SOURCE_DIR}

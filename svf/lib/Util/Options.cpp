@@ -160,8 +160,9 @@ const Option<bool> Options::PlainMappingFs("plain-mapping-fs", "Use an explicitl
                                            false);
 
 const OptionMap<PointsTo::Type> Options::PtType(
-    "pt-type", "points-to set data structure to use in all analyses", PointsTo::Type::SBV,
+    "pt-type", "points-to set data structure to use in all analyses", PointsTo::Type::RBM,
     {
+        {PointsTo::Type::RBM, "rbm", "Roaring Bitmap, original implementation, often degraded to arrays"},
         {PointsTo::Type::SBV, "sbv", "sparse bit-vector"},
         {PointsTo::Type::CBV, "cbv", "core bit-vector (dynamic bit-vector without leading and trailing 0s)"},
         {PointsTo::Type::BV, "bv", "bit-vector (dynamic bit-vector without trailing 0s)"},
