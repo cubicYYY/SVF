@@ -21,7 +21,7 @@ RoaringBitmap::const_iterator RoaringBitmap::RoaringBitmapIterator::operator++(i
     return old;
 }
 
-u32_t RoaringBitmap::RoaringBitmapIterator::operator*(void) const
+uint32_t RoaringBitmap::RoaringBitmapIterator::operator*(void) const
 {
     return *it_;
 }
@@ -95,6 +95,11 @@ bool RoaringBitmap::operator==(const RoaringBitmap& rhs) const noexcept
     return roaring == rhs.roaring;
 }
 
+bool RoaringBitmap::operator!=(const RoaringBitmap& rhs) const noexcept
+{
+    return !(roaring == rhs.roaring);
+}
+
 bool RoaringBitmap::operator|=(const RoaringBitmap& rhs) noexcept
 {
     // TODO: Avoid cardinality counting
@@ -134,7 +139,36 @@ size_t RoaringBitmap::hash(void) const
     auto first_val = first.i.has_value ? *first : 0;
     auto last_val = last.i.has_value ? *last : 0;
 
-    SVF::Hash<std::pair<std::pair<size_t, size_t>, size_t>> h;
-    return h(std::make_pair(std::make_pair(roaring.cardinality(), first_val), last_val));
+    return roaring.cardinality() * 961 + first_val * 31 + last_val;
 }
+
+RoaringBitmap& RoaringBitmap::operator=(const RoaringBitmap& rhs) noexcept
+{
+    roaring = rhs.roaring;
+    return *this;
+}
+RoaringBitmap& RoaringBitmap::operator=(RoaringBitmap&& rhs) noexcept
+{
+    roaring = std::move(rhs.roaring);
+    return *this;
+}
+
+RoaringBitmap RoaringBitmap::operator&(const RoaringBitmap& rhs) const noexcept
+{
+    RoaringBitmap result(roaring & rhs.roaring);
+    return result;
+}
+
+RoaringBitmap RoaringBitmap::operator|(const RoaringBitmap& rhs) const noexcept
+{
+    RoaringBitmap result(roaring | rhs.roaring);
+    return result;
+}
+
+RoaringBitmap RoaringBitmap::operator-(const RoaringBitmap& rhs) const noexcept
+{
+    RoaringBitmap result(roaring - rhs.roaring);
+    return result;
+}
+
 } // namespace SVF

@@ -1516,6 +1516,12 @@ void SVFIRReader::readJson(const cJSON* obj, std::string& str)
     str = obj->valuestring;
 }
 
+void SVFIRReader::readJson(const cJSON* obj, RoaringBitmap& bitmap)
+{
+    // TODO: !!!
+    assert(false && "Not implemented!");
+}
+
 ICFGNode* SVFIRReader::createICFGNode(NodeID id, GNodeK kind)
 {
     switch (kind)

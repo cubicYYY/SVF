@@ -5,8 +5,7 @@
 #    define ROARING_EXCEPTIONS 0
 #endif
 
-#include "SVFIR/SVFType.h"
-#include "Util/GeneralType.h"
+#include <cstdint>
 #include "roaring.hh" // the amalgamated roaring.hh includes roaring64map.hh
 
 namespace SVF
@@ -15,21 +14,28 @@ namespace SVF
 /// Its iterator has built-in "current element" optimization.
 class RoaringBitmap
 {
+    friend class SVFIRWriter;
+    friend class SVFIRReader;
 
 public:
     class RoaringBitmapIterator;
     using iterator = RoaringBitmapIterator;
     using const_iterator = const RoaringBitmapIterator;
-    using size_type = u32_t;
+    using size_type = uint32_t;
 
 public:
     RoaringBitmap() : roaring({}) {}
     RoaringBitmap(const RoaringBitmap& RHS) : roaring(RHS.roaring) {}
     RoaringBitmap(RoaringBitmap&& RHS) noexcept : roaring(std::move(RHS.roaring)) {}
+    RoaringBitmap(const roaring::Roaring& r) noexcept : roaring(r) {}
+    RoaringBitmap(roaring::Roaring&& r) noexcept : roaring(std::move(r)) {}
 
     /// Wrapper class of CRoaring Bitmap
     class RoaringBitmapIterator
     {
+        friend class SVFIRWriter;
+        friend class SVFIRReader;
+
     public:
         RoaringBitmapIterator(void) = delete;
         RoaringBitmapIterator(const RoaringBitmap* rbm, bool end = false);
@@ -46,7 +52,7 @@ public:
         const_iterator operator++(int);
 
         /// `*it`
-        u32_t operator*(void) const;
+        uint32_t operator*(void) const;
 
         bool operator==(const_iterator& rhs) const;
         bool operator!=(const_iterator& rhs) const;
@@ -68,8 +74,14 @@ public:
     void clear(void);
 
     bool operator==(const RoaringBitmap& rhs) const noexcept;
+    bool operator!=(const RoaringBitmap& rhs) const noexcept;
     bool operator|=(const RoaringBitmap& rhs) noexcept;
     bool operator&=(const RoaringBitmap& rhs) noexcept;
+    RoaringBitmap& operator=(const RoaringBitmap& rhs) noexcept;
+    RoaringBitmap& operator=(RoaringBitmap&& rhs) noexcept;
+    RoaringBitmap operator&(const RoaringBitmap& rhs) const noexcept;
+    RoaringBitmap operator|(const RoaringBitmap& rhs) const noexcept;
+    RoaringBitmap operator-(const RoaringBitmap& rhs) const noexcept;
     bool intersectWithComplement(const RoaringBitmap& rhs) noexcept;
     void intersectWithComplement(const RoaringBitmap& lhs, const RoaringBitmap& rhs) noexcept;
     size_t hash(void) const;

@@ -1052,6 +1052,7 @@ private:
     SVFIR* read(const cJSON* root);
     const cJSON* createObjs(const cJSON* root);
 
+    void readJson(const cJSON* obj, RoaringBitmap& bitmap);
     void readJson(const cJSON* obj, NodeIDAllocator* idAllocator);
     void readJson(SymbolTableInfo* symTabInfo);
     void readJson(IRGraph* graph); // IRGraph Graph
