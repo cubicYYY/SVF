@@ -24,11 +24,26 @@ public:
     using size_type = uint32_t;
 
 public:
-    RoaringBitmap() : roaring({}) {}
-    RoaringBitmap(const RoaringBitmap& RHS) : roaring(RHS.roaring) {}
-    RoaringBitmap(RoaringBitmap&& RHS) noexcept : roaring(std::move(RHS.roaring)) {}
-    RoaringBitmap(const roaring::Roaring& r) noexcept : roaring(r) {}
-    RoaringBitmap(roaring::Roaring&& r) noexcept : roaring(std::move(r)) {}
+    RoaringBitmap() : roaring({})
+    {
+        roaring.setCopyOnWrite(true);
+    }
+    RoaringBitmap(const RoaringBitmap& RHS) : roaring(RHS.roaring)
+    {
+        roaring.setCopyOnWrite(true);
+    }
+    RoaringBitmap(RoaringBitmap&& RHS) noexcept : roaring(std::move(RHS.roaring))
+    {
+        roaring.setCopyOnWrite(true);
+    }
+    RoaringBitmap(const roaring::Roaring& r) noexcept : roaring(r)
+    {
+        roaring.setCopyOnWrite(true);
+    }
+    RoaringBitmap(roaring::Roaring&& r) noexcept : roaring(std::move(r))
+    {
+        roaring.setCopyOnWrite(true);
+    }
 
     /// Wrapper class of CRoaring Bitmap
     class RoaringBitmapIterator

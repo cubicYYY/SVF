@@ -60,7 +60,7 @@ typedef unsigned CallSiteID;
 typedef unsigned ThreadID;
 typedef s64_t APOffset;
 
-typedef RoaringBitmap NodeBS;
+typedef SparseBitVector<> NodeBS;
 typedef unsigned PointsToID;
 
 /// provide extra hash function for std::pair handling

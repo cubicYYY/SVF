@@ -245,7 +245,7 @@ if [[ $1 =~ ^[Dd]ebug$ ]]; then
 else
     BUILD_TYPE='Release'
 fi
-BUILD_DIR="./${BUILD_TYPE}-build-RBM"
+BUILD_DIR="./${BUILD_TYPE}-build-RBM-cow"
 
 rm -rf "${BUILD_DIR}"
 mkdir "${BUILD_DIR}"
