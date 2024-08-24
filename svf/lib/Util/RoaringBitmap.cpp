@@ -1,8 +1,6 @@
 #include "Util/RoaringBitmap.h"
 #include "roaring.c"
 
-// TODO: use BulkContext to accelerate
-
 namespace SVF
 {
 RoaringBitmap::RoaringBitmapIterator::RoaringBitmapIterator(const RoaringBitmap* rbm, bool end)
@@ -52,21 +50,23 @@ bool RoaringBitmap::empty(void) const noexcept
 
 bool RoaringBitmap::test(size_type idx) const noexcept
 {
-    return roaring.contains(idx);
+    return roaring.containsBulk(bulk, idx);
 }
 
 void RoaringBitmap::set(size_type idx) noexcept
 {
-    return roaring.add(idx);
+    return roaring.addBulk(bulk, idx);
 }
 
 void RoaringBitmap::reset(size_type idx) noexcept
 {
+    invalidateBulk();
     return roaring.remove(idx);
 }
 
 bool RoaringBitmap::test_and_set(size_type idx) noexcept
 {
+    invalidateBulk();
     return roaring.addChecked(idx);
 }
 
@@ -80,13 +80,14 @@ bool RoaringBitmap::intersects(const RoaringBitmap& RHS) const noexcept
     return RHS.roaring.intersect(roaring);
 }
 
-RoaringBitmap::size_type RoaringBitmap::count(void) const
+RoaringBitmap::size_type RoaringBitmap::count(void) const noexcept
 {
     return (size_type)roaring.cardinality(); // FIXME: safe?
 }
 
-void RoaringBitmap::clear(void)
+void RoaringBitmap::clear(void) noexcept
 {
+    invalidateBulk();
     roaring.clear();
 }
 
@@ -103,6 +104,7 @@ bool RoaringBitmap::operator!=(const RoaringBitmap& rhs) const noexcept
 bool RoaringBitmap::operator|=(const RoaringBitmap& rhs) noexcept
 {
     // TODO: Avoid cardinality counting
+    invalidateBulk();
     auto card = roaring.cardinality();
     roaring |= rhs.roaring;
     return card != roaring.cardinality();
@@ -111,6 +113,7 @@ bool RoaringBitmap::operator|=(const RoaringBitmap& rhs) noexcept
 bool RoaringBitmap::operator&=(const RoaringBitmap& rhs) noexcept
 {
     // TODO: Avoid cardinality counting
+    invalidateBulk();
     auto card = roaring.cardinality();
     roaring &= rhs.roaring;
     return card != roaring.cardinality();
@@ -119,6 +122,7 @@ bool RoaringBitmap::operator&=(const RoaringBitmap& rhs) noexcept
 bool RoaringBitmap::intersectWithComplement(const RoaringBitmap& rhs) noexcept
 {
     // TODO: Avoid cardinality counting
+    invalidateBulk();
     auto card = roaring.cardinality();
     roaring -= rhs.roaring;
     return card != roaring.cardinality();
@@ -127,6 +131,7 @@ bool RoaringBitmap::intersectWithComplement(const RoaringBitmap& rhs) noexcept
 void RoaringBitmap::intersectWithComplement(const RoaringBitmap& lhs, const RoaringBitmap& rhs) noexcept
 {
     // TODO: faster?
+    invalidateBulk();
     roaring = lhs.roaring;
     roaring -= rhs.roaring;
 }
@@ -144,11 +149,13 @@ size_t RoaringBitmap::hash(void) const
 
 RoaringBitmap& RoaringBitmap::operator=(const RoaringBitmap& rhs) noexcept
 {
+    invalidateBulk();
     roaring = rhs.roaring;
     return *this;
 }
 RoaringBitmap& RoaringBitmap::operator=(RoaringBitmap&& rhs) noexcept
 {
+    invalidateBulk();
     roaring = std::move(rhs.roaring);
     return *this;
 }
@@ -169,6 +176,11 @@ RoaringBitmap RoaringBitmap::operator-(const RoaringBitmap& rhs) const noexcept
 {
     RoaringBitmap result(roaring - rhs.roaring);
     return result;
+}
+
+void RoaringBitmap::invalidateBulk() noexcept
+{
+    bulk = roaring::BulkContext();
 }
 
 } // namespace SVF

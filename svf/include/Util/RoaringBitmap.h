@@ -85,8 +85,8 @@ public:
     bool test_and_set(size_type idx) noexcept;
     bool contains(const RoaringBitmap& RHS) const noexcept;
     bool intersects(const RoaringBitmap& RHS) const noexcept;
-    size_type count(void) const;
-    void clear(void);
+    size_type count(void) const noexcept;
+    void clear(void) noexcept;
 
     bool operator==(const RoaringBitmap& rhs) const noexcept;
     bool operator!=(const RoaringBitmap& rhs) const noexcept;
@@ -100,9 +100,11 @@ public:
     bool intersectWithComplement(const RoaringBitmap& rhs) noexcept;
     void intersectWithComplement(const RoaringBitmap& lhs, const RoaringBitmap& rhs) noexcept;
     size_t hash(void) const;
+    void invalidateBulk() noexcept;
 
 public:
     roaring::Roaring roaring;
+    mutable roaring::BulkContext bulk{};
 };
 
 } // namespace SVF
