@@ -301,6 +301,7 @@ size_t PointsTo::hash() const
 {
     // TODO: common hash interfaces
 
+    if (type == EWAH) return ewah.hash();
     if (type == RBM) return rbm.hash();
     if (type == CBV) return cbv.hash();
     else if (type == SBV)
@@ -310,7 +311,6 @@ size_t PointsTo::hash() const
     }
     else if (type == BV)
         return bv.hash();
-
     else
     {
         assert(false && "PointsTo::hash: unknown type");

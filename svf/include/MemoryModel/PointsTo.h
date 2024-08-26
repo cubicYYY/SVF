@@ -19,6 +19,7 @@
 #include "Util/CoreBitVector.h"
 #include "Util/SparseBitVector.h"
 #include "Util/RoaringBitmap.h"
+#include "Util/EWAH.h"
 
 // These `PT_*` macro definitions help to perform operations on the underlying `PointsTo` data structure,
 // without having to care about exactly what kind of data structure it is.
@@ -66,6 +67,7 @@ case PT_ENUM_NAME: {                                                            
         switch (type)                                                                                                  \
         {                                                                                                              \
             /* Underlying Data Structure Registrations: */                                                             \
+            PT_TYPE_CASE(PointsTo::Type::EWAH, SVF_EWAH, ewah, ewahIt, operation)                                    \
             PT_TYPE_CASE(PointsTo::Type::RBM, RoaringBitmap, rbm, rbmIt, operation)                                    \
             PT_TYPE_CASE(PointsTo::Type::SBV, SparseBitVector<>, sbv, sbvIt, operation)                                \
             PT_TYPE_CASE(PointsTo::Type::CBV, CoreBitVector, cbv, cbvIt, operation)                                    \
@@ -77,6 +79,7 @@ case PT_ENUM_NAME: {                                                            
 
 namespace SVF
 {
+using SVF_EWAH = SVF::EWAH<uint64_t>;
 
 /// Wraps data structures to provide a points-to set.
 /// Underlying data structure can be changed globally.
@@ -90,6 +93,7 @@ public:
         CBV,
         BV,
         RBM,
+        EWAH,
     };
 
     class PointsToIterator;
@@ -226,6 +230,8 @@ private:
         BitVector bv;
         /// CRoaring wrapper.
         RoaringBitmap rbm;
+        /// EWAH wrapper.
+        SVF_EWAH ewah;
     };
 
     /// Type of this points-to set.
@@ -285,6 +291,7 @@ public:
             CoreBitVector::iterator cbvIt;
             BitVector::iterator bvIt;
             RoaringBitmap::iterator rbmIt;
+            SVF_EWAH::iterator ewahIt;
         };
     };
 };

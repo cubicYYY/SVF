@@ -65,9 +65,9 @@ void RoaringBitmap::reset(size_type idx) noexcept
 }
 
 bool RoaringBitmap::test_and_set(size_type idx) noexcept
-{
-    invalidateBulk();
-    return roaring.addChecked(idx);
+{   bool result = roaring.addChecked(idx);
+    if (result) invalidateBulk();
+    return result;
 }
 
 bool RoaringBitmap::contains(const RoaringBitmap& RHS) const noexcept
@@ -155,27 +155,24 @@ RoaringBitmap& RoaringBitmap::operator=(const RoaringBitmap& rhs) noexcept
 }
 RoaringBitmap& RoaringBitmap::operator=(RoaringBitmap&& rhs) noexcept
 {
-    invalidateBulk();
+    bulk = std::move(rhs.bulk);
     roaring = std::move(rhs.roaring);
     return *this;
 }
 
 RoaringBitmap RoaringBitmap::operator&(const RoaringBitmap& rhs) const noexcept
 {
-    RoaringBitmap result(roaring & rhs.roaring);
-    return result;
+    return RoaringBitmap(roaring & rhs.roaring);
 }
 
 RoaringBitmap RoaringBitmap::operator|(const RoaringBitmap& rhs) const noexcept
 {
-    RoaringBitmap result(roaring | rhs.roaring);
-    return result;
+    return RoaringBitmap(roaring | rhs.roaring);
 }
 
 RoaringBitmap RoaringBitmap::operator-(const RoaringBitmap& rhs) const noexcept
 {
-    RoaringBitmap result(roaring - rhs.roaring);
-    return result;
+    return RoaringBitmap(roaring - rhs.roaring);
 }
 
 void RoaringBitmap::invalidateBulk() noexcept

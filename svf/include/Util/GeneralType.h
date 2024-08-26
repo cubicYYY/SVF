@@ -40,6 +40,7 @@
 #include <vector>
 #include "Util/SparseBitVector.h"
 #include "Util/RoaringBitmap.h"
+#include "Util/EWAH.h"
 
 namespace SVF
 {
@@ -60,7 +61,7 @@ typedef unsigned CallSiteID;
 typedef unsigned ThreadID;
 typedef s64_t APOffset;
 
-typedef SparseBitVector<> NodeBS;
+typedef EWAH<uint64_t> NodeBS;
 typedef unsigned PointsToID;
 
 /// provide extra hash function for std::pair handling

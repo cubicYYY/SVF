@@ -31,8 +31,11 @@ set(SVF_INSTALL_EXTAPI_FILE ${SVF_INSTALL_EXTAPI_DIR}/extapi.bc)
 
 # Third-parties
 set(CROARING_INCLUDES ${PROJECT_SOURCE_DIR}/CRoaring)
+set(EWAH_INCLUDES ${PROJECT_SOURCE_DIR}/EWAH)
 include_directories(SYSTEM ${CROARING_INCLUDES})
+include_directories(SYSTEM ${EWAH_INCLUDES})
 message(STATUS "Third-party configuration:
+  EWAH:                                         ${EWAH_INCLUDES}
   CRoaring:                                     ${CROARING_INCLUDES}")
 
 message(STATUS "Building ${PROJECT_NAME} with configuration:

@@ -1522,6 +1522,13 @@ void SVFIRReader::readJson(const cJSON* obj, RoaringBitmap& bitmap)
     assert(false && "Not implemented!");
 }
 
+template <typename uword>
+void SVFIRReader::readJson(const cJSON* obj, EWAH<uword>& bitmap)
+{
+    // TODO: !!!
+    assert(false && "Not implemented!");
+}
+
 ICFGNode* SVFIRReader::createICFGNode(NodeID id, GNodeK kind)
 {
     switch (kind)
