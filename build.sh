@@ -6,7 +6,7 @@
 # Dependencies include: build-essential libncurses5 libncurses-dev cmake zlib1g-dev
 set -e # exit on first error
 
-jobs=8
+jobs=28
 
 #########
 # VARs and Links
@@ -245,7 +245,7 @@ if [[ $1 =~ ^[Dd]ebug$ ]]; then
 else
     BUILD_TYPE='Release'
 fi
-BUILD_DIR="./${BUILD_TYPE}-build-RBM-cow"
+BUILD_DIR="./${BUILD_TYPE}-build-RBM-bulk"
 
 rm -rf "${BUILD_DIR}"
 mkdir "${BUILD_DIR}"

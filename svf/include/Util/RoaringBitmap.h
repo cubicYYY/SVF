@@ -101,7 +101,8 @@ public:
     void intersectWithComplement(const RoaringBitmap& lhs, const RoaringBitmap& rhs) noexcept;
     size_t hash(void) const;
     void invalidateBulk() noexcept;
-
+    static void logOperation(const std::string& operation, const RoaringBitmap& lhs, const RoaringBitmap& rhs);
+    static void logSingleOperation(const std::string& operation, const RoaringBitmap& rhs, const int idx=-1);
 public:
     roaring::Roaring roaring;
     mutable roaring::BulkContext bulk{};

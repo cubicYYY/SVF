@@ -31,7 +31,7 @@
 #define GRAPHSOLVER_H_
 
 #include "Util/WorkList.h"
-
+#include <iostream>
 namespace SVF
 {
 
@@ -121,6 +121,7 @@ protected:
     /// Propagation for the solving, to be implemented in the child class
     virtual void propagate(GNODE* v)
     {
+        std::cout << "# PROPAGATE: " << GTraits::getNodeID(*v) << std::endl;
         child_iterator EI = GTraits::direct_child_begin(*v);
         child_iterator EE = GTraits::direct_child_end(*v);
         for (; EI != EE; ++EI)
